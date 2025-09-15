@@ -1,0 +1,61 @@
+# Project Context: Prism NGFW
+
+This document summarizes the current state, architectural decisions, and immediate next steps for the Prism NGFW project.
+
+## 1. Project Overview
+
+- **Project Name**: Prism
+- **Goal**: Build a containerized reverse-proxy NGFW/WAF in Go with a React dashboard for management.
+- **Current Working Directory**: `/Users/kpradhan/Go-Projects/Prism`
+- **Version Control**: Git repository initialized.
+
+## 2. Architectural Decisions & Current State
+
+### 2.1 Go Application Structure
+- **Modular Design**: Code is organized into standard Go packages:
+    - `cmd/prism`: Contains `main.go`, the application entry point.
+    - `pkg/api`: Handles API endpoints (e.g., `/api/v1/hello`).
+    - `pkg/firewall`: Contains firewall rules logic (`RuleProvider`, `InMemoryRuleProvider`, `Middleware`).
+    - `pkg/proxy`: Contains reverse proxy logic (`NewReverseProxy`).
+    - `pkg/storage`: Handles database connection and future data access.
+
+### 2.2 Routing Strategy
+- **Path-Based Routing**: The application uses a central `http.ServeMux` to route requests based on URL path:
+    - `/<project_name>`: Will be routed to the Reverse Proxy Module, which then looks up the project's upstream URL in the database.
+    - `/user/<username>`: Will serve the Admin Dashboard UI (future).
+    - `/api/...`: Will serve the Management API (currently `/api/v1/hello`).
+
+### 2.3 Frontend Applications
+- **Protected App**: `my-test-app` (React SPA on `http://localhost:3000`) is the application *protected by* Prism, not Prism's dashboard.
+- **Management Dashboard**: A separate, future React application will interact with Prism's `/api/...` endpoints.
+
+### 2.4 Authentication & Database
+- **Authentication**: **Supabase Auth** (Clerk integration has been removed).
+- **Database**: **Supabase Postgres** (cloud-hosted).
+- **Configuration**: `DATABASE_URL` is loaded from a `.env` file in the project root (`/Users/kpradhan/Go-Projects/Prism/.env`).
+
+### 2.5 Current Functionality
+- **Application Startup**: `go run ./cmd/prism` (from `Prism` directory).
+- **Database Connection**: Successfully connects to Supabase Postgres using `DATABASE_URL` from `.env`.
+- **API Endpoint**: `/api/v1/hello` is a public endpoint (currently unprotected).
+- **Proxy**: Default proxy target is `http://localhost:3000` (in-memory rules).
+
+## 3. Immediate Next Step
+
+- **Database Schema Definition**: Define and create the necessary tables in the Supabase Postgres database.
+    - `projects` table (for dynamic routing: maps path/hostname to upstream URL).
+    - `rules` table (for firewall rules, linked to projects).
+    - `users` table (managed by Supabase Auth).
+
+## 4. Key Credentials (User's Responsibility)
+
+- **Supabase Project URL**
+- **Supabase `anon` key**
+- **Supabase `service_role` key**
+- **Supabase Database Connection String** (Transaction Pooler, stored in `.env` as `DATABASE_URL`)
+- **Supabase Database Password**
+
+## 5. Important Notes
+
+- `CLERK_SECRET_KEY` is no longer used.
+- `DATABASE_URL` is crucial for application startup.
