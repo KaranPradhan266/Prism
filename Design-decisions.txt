@@ -1,0 +1,32 @@
+# Design Decision: Path-Based Dynamic Routing
+
+This document captures the critical insight regarding how the firewall will handle requests for multiple, distinct projects and users.
+
+## The Core Problem
+
+Instead of proxying to a single address, the firewall must handle three distinct types of requests based on the URL's path:
+
+1.  **Project Traffic**: Requests for a specific project (e.g., `/<project_name>`).
+2.  **Admin Traffic**: Requests by a user to access their management dashboard (e.g., `/<user_name>`).
+3.  **API Traffic**: Internal API calls for configuration (e.g., `/api/...`).
+
+## The Architectural Solution: Path-Based Routing
+
+The application, named "Prism", will use a central router (multiplexer) to direct traffic based on the request's URL path.
+
+### How it Works:
+
+1.  **Request Arrives**: A request hits the main application endpoint (e.g., `http://prism.local/`).
+
+2.  **Router Inspection**: A router at the entry point inspects the URL path.
+
+3.  **Routing Logic**:
+    *   If the path matches a known project name (e.g., `/project-alpha`), the router sends the request to the **Reverse Proxy Module**. The proxy then looks up that project's backend URL in the database and forwards the request.
+    *   If the path starts with `/user/` (e.g., `/user/Karan`), the router sends the request to the **Admin Dashboard Handler**. This handler will be responsible for serving the user-specific management UI.
+    *   If the path starts with `/api/`, the router sends the request to the **Management API Handler**. This API is protected by Clerk authentication.
+
+## Implications
+
+- **Centralized Logic**: A main router becomes the single point of entry, simplifying the request flow.
+- **Clear Separation**: The three main functions (proxying, admin UI, and API) are cleanly separated and handled by different internal modules.
+- **Database is Key**: The database must store mappings for project paths to upstream URLs, and user paths to their respective accounts.

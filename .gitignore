@@ -1,0 +1,21 @@
+# Go binaries
+prism
+prism.exe
+
+# Node dependencies
+/node_modules
+
+# Env files
+.env
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# IDE-specific files
+.idea/
+.vscode/

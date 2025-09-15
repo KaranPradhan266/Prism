@@ -1,0 +1,72 @@
+NGFW/WAF in Go – Project Roadmap
+
+Project Goal:
+Build a containerized reverse-proxy NGFW/WAF in Go that sits in front of SPAs or APIs. 
+Features include IP/port filtering, stateful inspection, HTTP DPI, and integration with a React dashboard for live monitoring and rule management. 
+
+Phases Overview:
+
+Phase 0: Project Setup
+- Install Go and initialize project
+- Directory structure:
+  /cmd, /pkg, /config, /web, /docker
+- Git and Docker initialization
+
+Phase 1: Basic Reverse Proxy
+- Implement HTTP/HTTPS reverse proxy
+- CLI to configure upstream URLs/ports
+- Logging requests/responses
+- Test with SPA/API backend
+
+Phase 2: Network-Level Firewall
+- IP/Port filtering
+- CLI commands to add/remove rules
+- Whitelist/blacklist support
+- Test filtering functionality
+
+Phase 3: Stateful Inspection
+- Maintain connection table (srcIP:port -> dstIP:port -> state)
+- Session timeout and cleanup
+- Detect anomalous TCP sequences
+- CLI to list active connections
+
+Phase 4: HTTP Deep Packet Inspection (DPI)
+- Inspect HTTP headers, cookies, query params, body
+- Predefined and custom rules
+- CLI to manage rules
+- Logging and alerting blocked traffic
+
+Phase 5: React Dashboard Integration
+- Visualize traffic, rules, alerts
+- API endpoints in Go for live feed and rule management
+- WebSocket/Server-Sent Events for real-time updates
+- Sync CLI changes with dashboard
+
+Phase 6: Containerization & Deployment
+- Dockerfile for Go app
+- docker-compose to launch firewall + backend
+- CLI to start/stop containerized firewall
+- Test with multiple web projects
+
+Phase 7: Optimization & Security Hardening
+- Connection pooling and concurrency improvements
+- Memory and state table optimization
+- Panic recovery, input validation, timeout handling
+- Optional: eBPF integration
+
+Phase 8: CLI Usability Enhancements
+- Use cobra or urfave/cli
+- Subcommands:
+  start, stop, rules add/remove, connections list, logs tail
+- Interactive mode for rule testing
+
+Phase 9: Documentation & Testing
+- README with setup, CLI commands, examples
+- Unit tests for core modules
+- Integration tests with SPA/API backends
+- Example Docker setups
+
+Deliverable:
+- Fully functional, containerized NGFW/WAF
+- CLI interface and React dashboard
+- Ready to wrap any web project via Docker
