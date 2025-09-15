@@ -7,8 +7,16 @@ import (
 	"net/url"
 )
 
+// Factory is a factory for creating reverse proxies.
+type Factory struct{}
+
+// NewFactory creates a new proxy factory.
+func NewFactory() *Factory {
+	return &Factory{}
+}
+
 // NewReverseProxy creates a reverse proxy to forward traffic to the target.
-func NewReverseProxy(target string) *httputil.ReverseProxy {
+func (f *Factory) NewReverseProxy(target string) *httputil.ReverseProxy {
 	url, err := url.Parse(target)
 	if err != nil {
 		log.Fatalf("Invalid target URL: %v", err)

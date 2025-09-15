@@ -1,0 +1,26 @@
+-- Table for storing user projects
+CREATE TABLE IF NOT EXISTS projects (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE, -- Links to Supabase Auth users
+    name TEXT NOT NULL UNIQUE,
+    path_prefix TEXT NOT NULL UNIQUE, -- e.g., '/my-project'
+    upstream_url TEXT NOT NULL,       -- e.g., 'http://localhost:3000'
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+   );
+   
+   -- Table for storing firewall rules
+CREATE TABLE IF NOT EXISTS rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,               -- e.g., 'ip_block', 'keyword_block'
+    value TEXT NOT NULL,              -- e.g., '192.168.1.1', 'badword'
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Optional: Add indexes for performance
+CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
+CREATE INDEX IF NOT EXISTS idx_projects_path_prefix ON projects(path_prefix);
+CREATE INDEX IF NOT EXISTS idx_rules_project_id ON rules(project_id);
