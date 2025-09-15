@@ -15,13 +15,13 @@ This document summarizes the current state, architectural decisions, and immedia
 - **Modular Design**: Code is organized into standard Go packages:
     - `cmd/prism`: Contains `main.go`, the application entry point.
     - `pkg/api`: Handles API endpoints (e.g., `/api/v1/hello`).
-    - `pkg/firewall`: Contains firewall rules logic (`RuleProvider`, `InMemoryRuleProvider`, `Middleware`).
-    - `pkg/proxy`: Contains reverse proxy logic (`NewReverseProxy`).
-    - `pkg/storage`: Handles database connection and future data access.
+    - `pkg/firewall`: Contains firewall rules logic (`Middleware`).
+    - `pkg/proxy`: Contains reverse proxy logic (`NewReverseProxy`, `Factory`).
+    - `pkg/storage`: Handles database connection and data access (`NewDB`, `Repository`, `Project`, `Rule`).
 
 ### 2.2 Routing Strategy
 - **Path-Based Routing**: The application uses a central `http.ServeMux` to route requests based on URL path:
-    - `/<project_name>`: Will be routed to the Reverse Proxy Module, which then looks up the project's upstream URL in the database.
+    - `/<project_name>`: Dynamically routed to the Reverse Proxy Module, which looks up the project's upstream URL and rules in the database.
     - `/user/<username>`: Will serve the Admin Dashboard UI (future).
     - `/api/...`: Will serve the Management API (currently `/api/v1/hello`).
 
@@ -34,18 +34,17 @@ This document summarizes the current state, architectural decisions, and immedia
 - **Database**: **Supabase Postgres** (cloud-hosted).
 - **Configuration**: `DATABASE_URL` is loaded from a `.env` file in the project root (`/Users/kpradhan/Go-Projects/Prism/.env`).
 
-### 2.5 Current Functionality
+## 2.5 Current Functionality (Working & Tested)
 - **Application Startup**: `go run ./cmd/prism` (from `Prism` directory).
 - **Database Connection**: Successfully connects to Supabase Postgres using `DATABASE_URL` from `.env`.
+- **Dynamic Routing & Proxying**: Correctly identifies projects by `path_prefix` from the database, rewrites URLs, and proxies traffic to the correct `upstream_url`.
+- **Database-Driven Firewall Rules**: Applies `ip_block` and `keyword_block` rules fetched from the database for each project.
+- **Static Asset Handling**: Correctly serves static assets for proxied SPAs (e.g., React app's `bundle.js`, `manifest.json`).
 - **API Endpoint**: `/api/v1/hello` is a public endpoint (currently unprotected).
-- **Proxy**: Default proxy target is `http://localhost:3000` (in-memory rules).
 
 ## 3. Immediate Next Step
 
-- **Database Schema Definition**: Define and create the necessary tables in the Supabase Postgres database.
-    - `projects` table (for dynamic routing: maps path/hostname to upstream URL).
-    - `rules` table (for firewall rules, linked to projects).
-    - `users` table (managed by Supabase Auth).
+- **Supabase Authentication Integration**: Integrate Supabase Auth to secure the management API endpoints.
 
 ## 4. Key Credentials (User's Responsibility)
 

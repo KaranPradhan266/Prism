@@ -62,7 +62,7 @@ func Middleware(repo *storage.Repository, proxyFactory *proxy.Factory) func(next
 						return
 					}
 				case "keyword_block":
-					if strings.Contains(r.URL.Path, rule.Value) {
+					if strings.Contains(r.URL.String(), rule.Value) {
 						log.Printf("Blocked request containing keyword '%s' for project '%s': %s\n", rule.Value, project.Name, r.URL.Path)
 						http.Error(w, "Forbidden: blocked by firewall", http.StatusForbidden)
 						return
