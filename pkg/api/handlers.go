@@ -17,6 +17,14 @@ type CreateProjectRequest struct {
 	UpstreamURL string `json:"upstream_url"`
 }
 
+// UpdateProjectRequest defines the structure for updating an existing project.
+type UpdateProjectRequest struct {
+	Name        *string `json:"name,omitempty"`
+	PathPrefix  *string `json:"path_prefix,omitempty"`
+	UpstreamURL *string `json:"upstream_url,omitempty"`
+	// Add other fields that can be updated
+}
+
 // HelloHandler is a sample handler for an API route.
 func HelloHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := GetUserIDFromContext(r.Context())
@@ -101,6 +109,56 @@ func ListProjectsHandler(repo *storage.Repository) http.HandlerFunc {
 		// Respond with list of projects
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(projects)
+	}
+}
+
+// UpdateProjectHandler handles updating an existing project.
+func UpdateProjectHandler(repo *storage.Repository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Ensure only PUT requests are handled
+		if r.Method != http.MethodPut {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Extract project ID from URL path
+		pathSegments := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/projects/"), "/")
+		if len(pathSegments) == 0 || pathSegments[0] == "" {
+			http.Error(w, "Bad Request: Project ID missing", http.StatusBadRequest)
+			return
+		}
+		projectID := pathSegments[0]
+
+		// Extract user ID from context
+		userID, ok := GetUserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Internal Server Error: User ID not found in context", http.StatusInternalServerError)
+			return
+		}
+
+		// Parse request body
+		var req UpdateProjectRequest
+		err := json.NewDecoder(r.Body).Decode(&req)
+		if err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		// Update project in database
+		project, err := repo.UpdateProject(r.Context(), projectID, userID, req.Name, req.PathPrefix, req.UpstreamURL)
+		if err != nil {
+			if err == storage.ErrProjectNotFound {
+				http.Error(w, "Not Found: Project not found or not owned by user", http.StatusNotFound)
+				return
+			}
+			log.Printf("Error updating project %s for user %s: %v\n", projectID, userID, err)
+			http.Error(w, "Failed to update project", http.StatusInternalServerError)
+			return
+		}
+
+		// Respond with updated project
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(project)
 	}
 }
 

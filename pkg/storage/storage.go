@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"strings"
 
 	// The blank import is required for the Postgres driver to register itself.
 	_ "github.com/lib/pq"
@@ -129,6 +130,64 @@ func (r *Repository) GetProjectByIDAndUserID(ctx context.Context, projectID, use
 	return project, nil
 }
 
+// UpdateProject updates an existing project in the database.
+func (r *Repository) UpdateProject(ctx context.Context, projectID, userID string, name, pathPrefix, upstreamURL *string) (*Project, error) {
+	// Start building the query dynamically
+	sets := []string{}
+	args := []interface{}{} 
+	argCounter := 1
+
+	if name != nil {
+		sets = append(sets, fmt.Sprintf("name = $%d", argCounter))
+		args = append(args, *name)
+		argCounter++
+	}
+	if pathPrefix != nil {
+		sets = append(sets, fmt.Sprintf("path_prefix = $%d", argCounter))
+		args = append(args, *pathPrefix)
+		argCounter++
+	}
+	if upstreamURL != nil {
+		sets = append(sets, fmt.Sprintf("upstream_url = $%d", argCounter))
+		args = append(args, *upstreamURL)
+		argCounter++
+	}
+
+	if len(sets) == 0 {
+		return nil, fmt.Errorf("no fields to update")
+	}
+
+	query := fmt.Sprintf("UPDATE projects SET %s, updated_at = NOW() WHERE id = $%d AND user_id = $%d RETURNING id, user_id, name, path_prefix, upstream_url, created_at, updated_at",
+		strings.Join(sets, ", "), argCounter, argCounter+1)
+	args = append(args, projectID, userID)
+
+	project := &Project{}
+	var scannedUserID sql.NullString
+
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(
+		&project.ID,
+		&scannedUserID,
+		&project.Name,
+		&project.PathPrefix,
+		&project.UpstreamURL,
+		&project.CreatedAt,
+		&project.UpdatedAt,
+	)
+
+	if scannedUserID.Valid {
+		project.UserID = scannedUserID // Assign if not NULL
+	}
+
+	if err == sql.ErrNoRows {
+		return nil, ErrProjectNotFound
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to update project: %w", err)
+	}
+
+	log.Printf("Updated project %s for user %s: %+v\n", projectID, userID, project)
+	return project, nil
+}
+
 // GetProjectsByUserID fetches all projects for a given user ID.
 func (r *Repository) GetProjectsByUserID(ctx context.Context, userID string) ([]Project, error) {
 	var projects []Project
@@ -176,8 +235,7 @@ func (r *Repository) GetRulesByProjectID(ctx context.Context, projectID string) 
 	var rules []Rule
 	query := `SELECT id, project_id, type, value, enabled, created_at, updated_at FROM rules WHERE project_id = $1 AND enabled = TRUE`
 
-
-rows, err := r.db.QueryContext(ctx, query, projectID)
+	rows, err := r.db.QueryContext(ctx, query, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query rules for project ID '%s': %w", projectID, err)
 	}
