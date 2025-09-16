@@ -30,7 +30,7 @@ This document summarizes the current state, architectural decisions, and immedia
 - **Management Dashboard**: A separate, future React application will interact with Prism's `/api/...` endpoints.
 
 ### 2.4 Authentication & Database
-- **Authentication**: **Supabase Auth** (Clerk integration has been removed).
+- **Authentication**: **Supabase Auth (Local JWT Verification)**.
 - **Database**: **Supabase Postgres** (cloud-hosted).
 - **Configuration**: `DATABASE_URL` is loaded from a `.env` file in the project root (`/Users/kpradhan/Go-Projects/Prism/.env`).
 
@@ -40,7 +40,7 @@ This document summarizes the current state, architectural decisions, and immedia
 - **Dynamic Routing & Proxying**: Correctly identifies projects by `path_prefix` from the database, rewrites URLs, and proxies traffic to the correct `upstream_url`.
 - **Database-Driven Firewall Rules**: Applies `ip_block` and `keyword_block` rules fetched from the database for each project.
 - **Static Asset Handling**: Correctly serves static assets for proxied SPAs (e.g., React app's `bundle.js`, `manifest.json`).
-- **API Endpoint**: `/api/v1/hello` is a public endpoint (currently unprotected).
+- **API Endpoint**: `/api/v1/hello` is now protected by Supabase JWT authentication.
 
 ## 3. Immediate Next Step
 
@@ -51,6 +51,7 @@ This document summarizes the current state, architectural decisions, and immedia
 - **Supabase Project URL**
 - **Supabase `anon` key**
 - **Supabase `service_role` key**
+- **Supabase JWT Secret** (newly added for local verification)
 - **Supabase Database Connection String** (Transaction Pooler, stored in `.env` as `DATABASE_URL`)
 - **Supabase Database Password**
 
