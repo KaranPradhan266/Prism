@@ -102,7 +102,7 @@ func ListProjectsHandler(repo *storage.Repository) http.HandlerFunc {
 		projects, err := repo.GetProjectsByUserID(r.Context(), userID)
 		if err != nil {
 			log.Printf("Error listing projects for user %s: %v\n", userID, err)
-			http.Error(w, "Failed to list projects", http.StatusInternalServerError)
+				http.Error(w, "Failed to list projects", http.StatusInternalServerError)
 			return
 		}
 
@@ -202,5 +202,46 @@ func GetProjectByIDHandler(repo *storage.Repository) http.HandlerFunc {
 		// Respond with project
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(project)
+	}
+}
+
+// DeleteProjectHandler handles deleting an existing project.
+func DeleteProjectHandler(repo *storage.Repository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Ensure only DELETE requests are handled
+		if r.Method != http.MethodDelete {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Extract project ID from URL path
+		pathSegments := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/projects/"), "/")
+		if len(pathSegments) == 0 || pathSegments[0] == "" {
+			http.Error(w, "Bad Request: Project ID missing", http.StatusBadRequest)
+			return
+		}
+		projectID := pathSegments[0]
+
+		// Extract user ID from context
+		userID, ok := GetUserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Internal Server Error: User ID not found in context", http.StatusInternalServerError)
+			return
+		}
+
+		// Delete project from database
+		err := repo.DeleteProject(r.Context(), projectID, userID)
+		if err != nil {
+			if err == storage.ErrProjectNotFound {
+				http.Error(w, "Not Found: Project not found or not owned by user", http.StatusNotFound)
+				return
+			}
+			log.Printf("Error deleting project %s for user %s: %v\n", projectID, userID, err)
+			http.Error(w, "Failed to delete project", http.StatusInternalServerError)
+			return
+		}
+
+		// Respond with No Content
+		w.WriteHeader(http.StatusNoContent)
 	}
 }

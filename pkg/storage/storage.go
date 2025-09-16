@@ -265,3 +265,26 @@ func (r *Repository) GetRulesByProjectID(ctx context.Context, projectID string) 
 	log.Printf("Fetched %d rules for project ID '%s'\n", len(rules), projectID)
 	return rules, nil
 }
+
+// DeleteProject deletes an existing project from the database.
+func (r *Repository) DeleteProject(ctx context.Context, projectID, userID string) error {
+	query := `DELETE FROM projects WHERE id = $1 AND user_id = $2`
+
+	result, err := r.db.ExecContext(ctx, query, projectID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete project: %w", err)
+	}
+
+
+rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return ErrProjectNotFound
+	}
+
+	log.Printf("Deleted project %s for user %s\n", projectID, userID)
+	return nil
+}
