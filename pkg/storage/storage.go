@@ -35,20 +35,55 @@ func NewDB(connStr string) (*sql.DB, error) {
 	return db, nil
 }
 
-// GetProjectByPathPrefix fetches a project by its path prefix.
-func (r *Repository) GetProjectByPathPrefix(ctx context.Context, pathPrefix string) (*Project, error) {
+// CreateProject inserts a new project into the database.
+func (r *Repository) CreateProject(ctx context.Context, userID, name, pathPrefix, upstreamURL string) (*Project, error) {
 	project := &Project{}
-	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at FROM projects WHERE path_prefix = $1`
+	query := `INSERT INTO projects (user_id, name, path_prefix, upstream_url) VALUES ($1, $2, $3, $4) RETURNING id, user_id, name, path_prefix, upstream_url, created_at, updated_at`
 
-	err := r.db.QueryRowContext(ctx, query, pathPrefix).Scan(
+	var scannedUserID sql.NullString // Use sql.NullString for scanning
+
+	err := r.db.QueryRowContext(ctx, query, userID, name, pathPrefix, upstreamURL).Scan(
 		&project.ID,
-		&project.UserID,
+		&scannedUserID,
 		&project.Name,
 		&project.PathPrefix,
 		&project.UpstreamURL,
 		&project.CreatedAt,
 		&project.UpdatedAt,
 	)
+
+	if scannedUserID.Valid {
+		project.UserID = scannedUserID // Assign if not NULL
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create project: %w", err)
+	}
+
+	log.Printf("Created project: %+v\n", project)
+	return project, nil
+}
+
+// GetProjectByPathPrefix fetches a project by its path prefix.
+func (r *Repository) GetProjectByPathPrefix(ctx context.Context, pathPrefix string) (*Project, error) {
+	project := &Project{}
+	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at FROM projects WHERE path_prefix = $1`
+
+	var scannedUserID sql.NullString
+
+	err := r.db.QueryRowContext(ctx, query, pathPrefix).Scan(
+		&project.ID,
+		&scannedUserID,
+		&project.Name,
+		&project.PathPrefix,
+		&project.UpstreamURL,
+		&project.CreatedAt,
+		&project.UpdatedAt,
+	)
+
+	if scannedUserID.Valid {
+		project.UserID = scannedUserID // Assign if not NULL
+	}
 
 	if err == sql.ErrNoRows {
 		return nil, fmt.Errorf("project with path prefix '%s' not found", pathPrefix)
