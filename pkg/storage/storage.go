@@ -10,6 +10,9 @@ import (
 	_ "github.com/lib/pq"
 )
 
+// ErrProjectNotFound is returned when a project is not found.
+var ErrProjectNotFound = fmt.Errorf("project not found")
+
 // Repository provides methods for interacting with the database.
 type Repository struct {
 	db *sql.DB
@@ -86,7 +89,7 @@ func (r *Repository) GetProjectByPathPrefix(ctx context.Context, pathPrefix stri
 	}
 
 	if err == sql.ErrNoRows {
-		return nil, fmt.Errorf("project with path prefix '%s' not found", pathPrefix)
+		return nil, ErrProjectNotFound
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to get project by path prefix: %w", err)
 	}
@@ -95,13 +98,43 @@ func (r *Repository) GetProjectByPathPrefix(ctx context.Context, pathPrefix stri
 	return project, nil
 }
 
+// GetProjectByIDAndUserID fetches a project by its ID and ensures it belongs to the given user ID.
+func (r *Repository) GetProjectByIDAndUserID(ctx context.Context, projectID, userID string) (*Project, error) {
+	project := &Project{}
+	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at FROM projects WHERE id = $1 AND user_id = $2`
+
+	var scannedUserID sql.NullString
+
+	err := r.db.QueryRowContext(ctx, query, projectID, userID).Scan(
+		&project.ID,
+		&scannedUserID,
+		&project.Name,
+		&project.PathPrefix,
+		&project.UpstreamURL,
+		&project.CreatedAt,
+		&project.UpdatedAt,
+	)
+
+	if scannedUserID.Valid {
+		project.UserID = scannedUserID // Assign if not NULL
+	}
+
+	if err == sql.ErrNoRows {
+		return nil, ErrProjectNotFound
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to get project by ID and user ID: %w", err)
+	}
+
+	log.Printf("Fetched project %s for user %s: %+v\n", projectID, userID, project)
+	return project, nil
+}
+
 // GetProjectsByUserID fetches all projects for a given user ID.
 func (r *Repository) GetProjectsByUserID(ctx context.Context, userID string) ([]Project, error) {
 	var projects []Project
 	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at FROM projects WHERE user_id = $1`
 
-
-rows, err := r.db.QueryContext(ctx, query, userID)
+	rows, err := r.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query projects for user ID '%s': %w", userID, err)
 	}

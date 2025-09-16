@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"prism/pkg/storage"
 )
@@ -100,5 +101,48 @@ func ListProjectsHandler(repo *storage.Repository) http.HandlerFunc {
 		// Respond with list of projects
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(projects)
+	}
+}
+
+// GetProjectByIDHandler handles fetching a single project by ID for the authenticated user.
+func GetProjectByIDHandler(repo *storage.Repository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Ensure only GET requests are handled
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Extract project ID from URL path
+		// Expected format: /api/v1/projects/{id}
+		pathSegments := strings.Split(strings.TrimPrefix(r.URL.Path, "/api/v1/projects/"), "/")
+		if len(pathSegments) == 0 || pathSegments[0] == "" {
+			http.Error(w, "Bad Request: Project ID missing", http.StatusBadRequest)
+			return
+		}
+		projectID := pathSegments[0]
+
+		// Extract user ID from context
+		userID, ok := GetUserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Internal Server Error: User ID not found in context", http.StatusInternalServerError)
+			return
+		}
+
+		// Get project from database
+		project, err := repo.GetProjectByIDAndUserID(r.Context(), projectID, userID)
+		if err != nil {
+			if err == storage.ErrProjectNotFound {
+				http.Error(w, "Not Found: Project not found or not owned by user", http.StatusNotFound)
+				return
+			}
+			log.Printf("Error getting project %s for user %s: %v\n", projectID, userID, err)
+			http.Error(w, "Failed to get project", http.StatusInternalServerError)
+			return
+		}
+
+		// Respond with project
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(project)
 	}
 }
