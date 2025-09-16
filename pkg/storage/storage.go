@@ -95,6 +95,49 @@ func (r *Repository) GetProjectByPathPrefix(ctx context.Context, pathPrefix stri
 	return project, nil
 }
 
+// GetProjectsByUserID fetches all projects for a given user ID.
+func (r *Repository) GetProjectsByUserID(ctx context.Context, userID string) ([]Project, error) {
+	var projects []Project
+	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at FROM projects WHERE user_id = $1`
+
+
+rows, err := r.db.QueryContext(ctx, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query projects for user ID '%s': %w", userID, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var project Project
+		var scannedUserID sql.NullString
+
+		err := rows.Scan(
+			&project.ID,
+			&scannedUserID,
+			&project.Name,
+			&project.PathPrefix,
+			&project.UpstreamURL,
+			&project.CreatedAt,
+			&project.UpdatedAt,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan project row: %w", err)
+		}
+
+		if scannedUserID.Valid {
+			project.UserID = scannedUserID // Assign if not NULL
+		}
+		projects = append(projects, project)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, fmt.Errorf("error after iterating rows: %w", err)
+	}
+
+	log.Printf("Fetched %d projects for user ID '%s'\n", len(projects), userID)
+	return projects, nil
+}
+
 // GetRulesByProjectID fetches all rules for a given project ID.
 func (r *Repository) GetRulesByProjectID(ctx context.Context, projectID string) ([]Rule, error) {
 	var rules []Rule

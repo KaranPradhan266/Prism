@@ -72,3 +72,33 @@ func CreateProjectHandler(repo *storage.Repository) http.HandlerFunc {
 		json.NewEncoder(w).Encode(project)
 	}
 }
+
+// ListProjectsHandler handles listing projects for the authenticated user.
+func ListProjectsHandler(repo *storage.Repository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Ensure only GET requests are handled
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		// Extract user ID from context
+		userID, ok := GetUserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Internal Server Error: User ID not found in context", http.StatusInternalServerError)
+			return
+		}
+
+		// Get projects from database
+		projects, err := repo.GetProjectsByUserID(r.Context(), userID)
+		if err != nil {
+			log.Printf("Error listing projects for user %s: %v\n", userID, err)
+			http.Error(w, "Failed to list projects", http.StatusInternalServerError)
+			return
+		}
+
+		// Respond with list of projects
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(projects)
+	}
+}
