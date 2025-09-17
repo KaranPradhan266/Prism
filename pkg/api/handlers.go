@@ -340,3 +340,44 @@ func ListRulesHandler(repo *storage.Repository) http.HandlerFunc {
 		json.NewEncoder(w).Encode(rules)
 	}
 }
+
+// GetRuleHandler handles fetching a single rule by its ID.
+func GetRuleHandler(repo *storage.Repository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		userID, ok := GetUserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Internal Server Error: User ID not found in context", http.StatusInternalServerError)
+			return
+		}
+
+		// Extract project ID and rule ID from URL
+		// e.g., /api/v1/projects/{projectID}/rules/{ruleID}
+		pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		if len(pathParts) != 6 { // expecting 6 parts: "api", "v1", "projects", {projectID}, "rules", {ruleID}
+			http.Error(w, "Bad Request: Invalid URL format for getting a rule", http.StatusBadRequest)
+			return
+		}
+		projectID := pathParts[3]
+		ruleID := pathParts[5]
+
+		rule, err := repo.GetRuleByID(r.Context(), userID, projectID, ruleID)
+		if err != nil {
+			if err == storage.ErrRuleNotFound {
+				http.Error(w, "Not Found: Rule not found or you do not have permission to access it", http.StatusNotFound)
+				return
+			}
+			log.Printf("Error getting rule %s for project %s: %v", ruleID, projectID, err)
+			http.Error(w, "Failed to get rule", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(rule)
+	}
+}

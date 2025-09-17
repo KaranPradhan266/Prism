@@ -14,6 +14,9 @@ import (
 // ErrProjectNotFound is returned when a project is not found.
 var ErrProjectNotFound = fmt.Errorf("project not found")
 
+// ErrRuleNotFound is returned when a rule is not found.
+var ErrRuleNotFound = fmt.Errorf("rule not found")
+
 // Repository provides methods for interacting with the database.
 type Repository struct {
 	db *sql.DB
@@ -251,6 +254,35 @@ rows, err := r.db.QueryContext(ctx, query, projectID)
 
 	log.Printf("Fetched %d rules for project ID '%s'\n", len(rules), projectID)
 	return rules, nil
+}
+
+// GetRuleByID fetches a single rule by its ID, ensuring it belongs to the correct user and project.
+func (r *Repository) GetRuleByID(ctx context.Context, userID, projectID, ruleID string) (*Rule, error) {
+	rule := &Rule{}
+	query := `
+		SELECT r.id, r.project_id, r.type, r.value, r.enabled, r.created_at, r.updated_at
+		FROM rules r
+		JOIN projects p ON r.project_id = p.id
+		WHERE r.id = $1 AND r.project_id = $2 AND p.user_id = $3`
+
+	err := r.db.QueryRowContext(ctx, query, ruleID, projectID, userID).Scan(
+		&rule.ID,
+		&rule.ProjectID,
+		&rule.Type,
+		&rule.Value,
+		&rule.Enabled,
+		&rule.CreatedAt,
+		&rule.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, ErrRuleNotFound
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to get rule by ID: %w", err)
+	}
+
+	log.Printf("Fetched rule %s for project %s user %s", ruleID, projectID, userID)
+	return rule, nil
 }
 
 // DeleteProject deletes an existing project from the database.
