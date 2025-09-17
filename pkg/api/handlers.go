@@ -25,6 +25,13 @@ type UpdateProjectRequest struct {
 	// Add other fields that can be updated
 }
 
+// CreateRuleRequest defines the structure for creating a new rule.
+type CreateRuleRequest struct {
+	Type    string `json:"type"`
+	Value   string `json:"value"`
+	Enabled bool   `json:"enabled"`
+}
+
 // HelloHandler is a sample handler for an API route.
 func HelloHandler(w http.ResponseWriter, r *http.Request) {
 	userID, ok := GetUserIDFromContext(r.Context())
@@ -102,7 +109,7 @@ func ListProjectsHandler(repo *storage.Repository) http.HandlerFunc {
 		projects, err := repo.GetProjectsByUserID(r.Context(), userID)
 		if err != nil {
 			log.Printf("Error listing projects for user %s: %v\n", userID, err)
-				http.Error(w, "Failed to list projects", http.StatusInternalServerError)
+			http.Error(w, "Failed to list projects", http.StatusInternalServerError)
 			return
 		}
 
@@ -243,5 +250,54 @@ func DeleteProjectHandler(repo *storage.Repository) http.HandlerFunc {
 
 		// Respond with No Content
 		w.WriteHeader(http.StatusNoContent)
+	}
+}
+
+// CreateRuleHandler handles the creation of new rules for a project.
+func CreateRuleHandler(repo *storage.Repository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		userID, ok := GetUserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Internal Server Error: User ID not found in context", http.StatusInternalServerError)
+			return
+		}
+
+		// Extract project ID from URL, e.g., /api/v1/projects/{projectID}/rules
+		pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		if len(pathParts) < 4 {
+			http.Error(w, "Bad Request: Invalid URL format", http.StatusBadRequest)
+			return
+		}
+		projectID := pathParts[3]
+
+		var req CreateRuleRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		if req.Type == "" || req.Value == "" {
+			http.Error(w, "Type and Value are required fields", http.StatusBadRequest)
+			return
+		}
+
+		rule, err := repo.CreateRule(r.Context(), userID, projectID, req.Type, req.Value, req.Enabled)
+		if err != nil {
+			if err == storage.ErrProjectNotFound {
+				http.Error(w, "Not Found: Project not found or not owned by user", http.StatusNotFound)
+				return
+			}
+			log.Printf("Error creating rule for project %s: %v", projectID, err)
+			http.Error(w, "Failed to create rule", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusCreated)
+		json.NewEncoder(w).Encode(rule)
 	}
 }

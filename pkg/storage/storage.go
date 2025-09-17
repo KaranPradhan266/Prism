@@ -134,7 +134,7 @@ func (r *Repository) GetProjectByIDAndUserID(ctx context.Context, projectID, use
 func (r *Repository) UpdateProject(ctx context.Context, projectID, userID string, name, pathPrefix, upstreamURL *string) (*Project, error) {
 	// Start building the query dynamically
 	sets := []string{}
-	args := []interface{}{} 
+	args := []interface{}{}
 	argCounter := 1
 
 	if name != nil {
@@ -275,8 +275,7 @@ func (r *Repository) DeleteProject(ctx context.Context, projectID, userID string
 		return fmt.Errorf("failed to delete project: %w", err)
 	}
 
-
-rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
@@ -287,4 +286,47 @@ rowsAffected, err := result.RowsAffected()
 
 	log.Printf("Deleted project %s for user %s\n", projectID, userID)
 	return nil
+}
+
+// CreateRule adds a new rule to a project, verifying ownership first.
+func (r *Repository) CreateRule(ctx context.Context, userID, projectID, ruleType, value string, enabled bool) (*Rule, error) {
+	// 1. Verify the user owns the project.
+	var ownerUserID string
+	err := r.db.QueryRowContext(ctx, "SELECT user_id FROM projects WHERE id = $1", projectID).Scan(&ownerUserID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			// Use the existing ErrProjectNotFound for consistency.
+			return nil, ErrProjectNotFound
+		}
+		return nil, fmt.Errorf("failed to verify project ownership: %w", err)
+	}
+
+	if ownerUserID != userID {
+		// If the user ID does not match, treat it as if the project was not found.
+		return nil, ErrProjectNotFound
+	}
+
+	// 2. Insert the new rule.
+	rule := &Rule{}
+	query := `
+		INSERT INTO rules (project_id, type, value, enabled) 
+		VALUES ($1, $2, $3, $4) 
+		RETURNING id, project_id, type, value, enabled, created_at, updated_at
+	`
+	err = r.db.QueryRowContext(ctx, query, projectID, ruleType, value, enabled).Scan(
+		&rule.ID,
+		&rule.ProjectID,
+		&rule.Type,
+		&rule.Value,
+		&rule.Enabled,
+		&rule.CreatedAt,
+		&rule.UpdatedAt,
+	)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create rule: %w", err)
+	}
+
+	log.Printf("Created rule for project %s: %+v\n", projectID, rule)
+	return rule, nil
 }
