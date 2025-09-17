@@ -439,3 +439,41 @@ func UpdateRuleHandler(repo *storage.Repository) http.HandlerFunc {
 		json.NewEncoder(w).Encode(updatedRule)
 	}
 }
+
+// DeleteRuleHandler handles deleting a rule.
+func DeleteRuleHandler(repo *storage.Repository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodDelete {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		userID, ok := GetUserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Internal Server Error: User ID not found in context", http.StatusInternalServerError)
+			return
+		}
+
+		// Extract project ID and rule ID from URL
+		pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		if len(pathParts) != 6 {
+			http.Error(w, "Bad Request: Invalid URL format for deleting a rule", http.StatusBadRequest)
+			return
+		}
+		projectID := pathParts[3]
+		ruleID := pathParts[5]
+
+		err := repo.DeleteRule(r.Context(), userID, projectID, ruleID)
+		if err != nil {
+			if err == storage.ErrRuleNotFound {
+				http.Error(w, "Not Found: Rule not found or you do not have permission to access it", http.StatusNotFound)
+				return
+			}
+			log.Printf("Error deleting rule %s: %v", ruleID, err)
+			http.Error(w, "Failed to delete rule", http.StatusInternalServerError)
+			return
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	}
+}

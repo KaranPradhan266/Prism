@@ -345,6 +345,32 @@ func (r *Repository) UpdateRule(ctx context.Context, userID, projectID, ruleID s
 	return updatedRule, nil
 }
 
+// DeleteRule deletes a rule, verifying ownership via a subquery.
+func (r *Repository) DeleteRule(ctx context.Context, userID, projectID, ruleID string) error {
+	query := `
+		DELETE FROM rules
+		WHERE id = $1 AND project_id = $2
+		  AND project_id IN (SELECT id FROM projects WHERE user_id = $3)`
+
+	result, err := r.db.ExecContext(ctx, query, ruleID, projectID, userID)
+	if err != nil {
+		return fmt.Errorf("failed to delete rule: %w", err)
+	}
+
+
+rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected after delete rule: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return ErrRuleNotFound // Rule not found or user does not have permission
+	}
+
+	log.Printf("Deleted rule %s", ruleID)
+	return nil
+}
+
 // DeleteProject deletes an existing project from the database.
 func (r *Repository) DeleteProject(ctx context.Context, projectID, userID string) error {
 	query := `DELETE FROM projects WHERE id = $1 AND user_id = $2`
