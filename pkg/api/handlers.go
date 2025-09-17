@@ -22,7 +22,6 @@ type UpdateProjectRequest struct {
 	Name        *string `json:"name,omitempty"`
 	PathPrefix  *string `json:"path_prefix,omitempty"`
 	UpstreamURL *string `json:"upstream_url,omitempty"`
-	// Add other fields that can be updated
 }
 
 // CreateRuleRequest defines the structure for creating a new rule.
@@ -30,6 +29,13 @@ type CreateRuleRequest struct {
 	Type    string `json:"type"`
 	Value   string `json:"value"`
 	Enabled bool   `json:"enabled"`
+}
+
+// UpdateRuleRequest defines the structure for updating an existing rule.
+type UpdateRuleRequest struct {
+	Type    *string `json:"type,omitempty"`
+	Value   *string `json:"value,omitempty"`
+	Enabled *bool   `json:"enabled,omitempty"`
 }
 
 // HelloHandler is a sample handler for an API route.
@@ -379,5 +385,57 @@ func GetRuleHandler(repo *storage.Repository) http.HandlerFunc {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(rule)
+	}
+}
+
+// UpdateRuleHandler handles updating an existing rule.
+func UpdateRuleHandler(repo *storage.Repository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPut {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		userID, ok := GetUserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Internal Server Error: User ID not found in context", http.StatusInternalServerError)
+			return
+		}
+
+		// Extract project ID and rule ID from URL
+		pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		if len(pathParts) != 6 {
+			http.Error(w, "Bad Request: Invalid URL format for updating a rule", http.StatusBadRequest)
+			return
+		}
+		projectID := pathParts[3]
+		ruleID := pathParts[5]
+
+		// Parse request body
+		var req UpdateRuleRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		// Update rule in the database
+		updatedRule, err := repo.UpdateRule(r.Context(), userID, projectID, ruleID, req.Type, req.Value, req.Enabled)
+		if err != nil {
+			if err == storage.ErrRuleNotFound {
+				http.Error(w, "Not Found: Rule not found or you do not have permission to access it", http.StatusNotFound)
+				return
+			}
+			if strings.Contains(err.Error(), "no fields to update") {
+				http.Error(w, "Bad Request: No fields provided to update", http.StatusBadRequest)
+				return
+			}
+			log.Printf("Error updating rule %s: %v", ruleID, err)
+			http.Error(w, "Failed to update rule", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(updatedRule)
 	}
 }

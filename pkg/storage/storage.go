@@ -285,6 +285,66 @@ func (r *Repository) GetRuleByID(ctx context.Context, userID, projectID, ruleID 
 	return rule, nil
 }
 
+// UpdateRule updates an existing rule, verifying ownership via a join to the projects table.
+func (r *Repository) UpdateRule(ctx context.Context, userID, projectID, ruleID string, ruleType, value *string, enabled *bool) (*Rule, error) {
+	sets := []string{}
+	args := []interface{}{}
+	argCounter := 1
+
+	if ruleType != nil {
+		sets = append(sets, fmt.Sprintf("type = $%d", argCounter))
+		args = append(args, *ruleType)
+		argCounter++
+	}
+	if value != nil {
+		sets = append(sets, fmt.Sprintf("value = $%d", argCounter))
+		args = append(args, *value)
+		argCounter++
+	}
+	if enabled != nil {
+		sets = append(sets, fmt.Sprintf("enabled = $%d", argCounter))
+		args = append(args, *enabled)
+		argCounter++
+	}
+
+	if len(sets) == 0 {
+		return nil, fmt.Errorf("no fields to update")
+	}
+
+	// Add the WHERE clause parameters to the args list
+	args = append(args, ruleID, projectID, userID)
+
+	// We use a subquery in the WHERE clause to check for project ownership.
+	// This is a common pattern to perform an update based on a join condition.
+	query := fmt.Sprintf(`
+		UPDATE rules
+		SET %s, updated_at = NOW()
+		WHERE id = $%d AND project_id = $%d
+		  AND project_id IN (SELECT id FROM projects WHERE user_id = $%d)
+		RETURNING id, project_id, type, value, enabled, created_at, updated_at`,
+		strings.Join(sets, ", "), argCounter, argCounter+1, argCounter+2)
+
+	updatedRule := &Rule{}
+	err := r.db.QueryRowContext(ctx, query, args...).Scan(
+		&updatedRule.ID,
+		&updatedRule.ProjectID,
+		&updatedRule.Type,
+		&updatedRule.Value,
+		&updatedRule.Enabled,
+		&updatedRule.CreatedAt,
+		&updatedRule.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, ErrRuleNotFound // If no row was updated, the rule was not found for this user
+	} else if err != nil {
+		return nil, fmt.Errorf("failed to update rule: %w", err)
+	}
+
+	log.Printf("Updated rule %s", ruleID)
+	return updatedRule, nil
+}
+
 // DeleteProject deletes an existing project from the database.
 func (r *Repository) DeleteProject(ctx context.Context, projectID, userID string) error {
 	query := `DELETE FROM projects WHERE id = $1 AND user_id = $2`
