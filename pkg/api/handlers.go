@@ -301,3 +301,42 @@ func CreateRuleHandler(repo *storage.Repository) http.HandlerFunc {
 		json.NewEncoder(w).Encode(rule)
 	}
 }
+
+// ListRulesHandler handles listing all rules for a project.
+func ListRulesHandler(repo *storage.Repository) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+			return
+		}
+
+		userID, ok := GetUserIDFromContext(r.Context())
+		if !ok {
+			http.Error(w, "Internal Server Error: User ID not found in context", http.StatusInternalServerError)
+			return
+		}
+
+		// Extract project ID from URL, e.g., /api/v1/projects/{projectID}/rules
+		pathParts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+		if len(pathParts) < 4 {
+			http.Error(w, "Bad Request: Invalid URL format", http.StatusBadRequest)
+			return
+		}
+		projectID := pathParts[3]
+
+		rules, err := repo.GetRulesByProjectID(r.Context(), userID, projectID)
+		if err != nil {
+			if err == storage.ErrProjectNotFound {
+				http.Error(w, "Not Found: Project not found or not owned by user", http.StatusNotFound)
+				return
+			}
+			log.Printf("Error listing rules for project %s: %v", projectID, err)
+			http.Error(w, "Failed to list rules", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(rules)
+	}
+}

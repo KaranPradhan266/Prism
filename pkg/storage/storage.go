@@ -44,21 +44,15 @@ func (r *Repository) CreateProject(ctx context.Context, userID, name, pathPrefix
 	project := &Project{}
 	query := `INSERT INTO projects (user_id, name, path_prefix, upstream_url) VALUES ($1, $2, $3, $4) RETURNING id, user_id, name, path_prefix, upstream_url, created_at, updated_at`
 
-	var scannedUserID sql.NullString // Use sql.NullString for scanning
-
 	err := r.db.QueryRowContext(ctx, query, userID, name, pathPrefix, upstreamURL).Scan(
 		&project.ID,
-		&scannedUserID,
+		&project.UserID,
 		&project.Name,
 		&project.PathPrefix,
 		&project.UpstreamURL,
 		&project.CreatedAt,
 		&project.UpdatedAt,
 	)
-
-	if scannedUserID.Valid {
-		project.UserID = scannedUserID // Assign if not NULL
-	}
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to create project: %w", err)
@@ -73,21 +67,15 @@ func (r *Repository) GetProjectByPathPrefix(ctx context.Context, pathPrefix stri
 	project := &Project{}
 	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at FROM projects WHERE path_prefix = $1`
 
-	var scannedUserID sql.NullString
-
 	err := r.db.QueryRowContext(ctx, query, pathPrefix).Scan(
 		&project.ID,
-		&scannedUserID,
+		&project.UserID,
 		&project.Name,
 		&project.PathPrefix,
 		&project.UpstreamURL,
 		&project.CreatedAt,
 		&project.UpdatedAt,
 	)
-
-	if scannedUserID.Valid {
-		project.UserID = scannedUserID // Assign if not NULL
-	}
 
 	if err == sql.ErrNoRows {
 		return nil, ErrProjectNotFound
@@ -104,21 +92,15 @@ func (r *Repository) GetProjectByIDAndUserID(ctx context.Context, projectID, use
 	project := &Project{}
 	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at FROM projects WHERE id = $1 AND user_id = $2`
 
-	var scannedUserID sql.NullString
-
 	err := r.db.QueryRowContext(ctx, query, projectID, userID).Scan(
 		&project.ID,
-		&scannedUserID,
+		&project.UserID,
 		&project.Name,
 		&project.PathPrefix,
 		&project.UpstreamURL,
 		&project.CreatedAt,
 		&project.UpdatedAt,
 	)
-
-	if scannedUserID.Valid {
-		project.UserID = scannedUserID // Assign if not NULL
-	}
 
 	if err == sql.ErrNoRows {
 		return nil, ErrProjectNotFound
@@ -162,21 +144,15 @@ func (r *Repository) UpdateProject(ctx context.Context, projectID, userID string
 	args = append(args, projectID, userID)
 
 	project := &Project{}
-	var scannedUserID sql.NullString
-
 	err := r.db.QueryRowContext(ctx, query, args...).Scan(
 		&project.ID,
-		&scannedUserID,
+		&project.UserID,
 		&project.Name,
 		&project.PathPrefix,
 		&project.UpstreamURL,
 		&project.CreatedAt,
 		&project.UpdatedAt,
 	)
-
-	if scannedUserID.Valid {
-		project.UserID = scannedUserID // Assign if not NULL
-	}
 
 	if err == sql.ErrNoRows {
 		return nil, ErrProjectNotFound
@@ -193,7 +169,8 @@ func (r *Repository) GetProjectsByUserID(ctx context.Context, userID string) ([]
 	var projects []Project
 	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at FROM projects WHERE user_id = $1`
 
-	rows, err := r.db.QueryContext(ctx, query, userID)
+
+rows, err := r.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query projects for user ID '%s': %w", userID, err)
 	}
@@ -201,11 +178,9 @@ func (r *Repository) GetProjectsByUserID(ctx context.Context, userID string) ([]
 
 	for rows.Next() {
 		var project Project
-		var scannedUserID sql.NullString
-
 		err := rows.Scan(
 			&project.ID,
-			&scannedUserID,
+			&project.UserID,
 			&project.Name,
 			&project.PathPrefix,
 			&project.UpstreamURL,
@@ -214,10 +189,6 @@ func (r *Repository) GetProjectsByUserID(ctx context.Context, userID string) ([]
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan project row: %w", err)
-		}
-
-		if scannedUserID.Valid {
-			project.UserID = scannedUserID // Assign if not NULL
 		}
 		projects = append(projects, project)
 	}
@@ -230,12 +201,28 @@ func (r *Repository) GetProjectsByUserID(ctx context.Context, userID string) ([]
 	return projects, nil
 }
 
-// GetRulesByProjectID fetches all rules for a given project ID.
-func (r *Repository) GetRulesByProjectID(ctx context.Context, projectID string) ([]Rule, error) {
-	var rules []Rule
-	query := `SELECT id, project_id, type, value, enabled, created_at, updated_at FROM rules WHERE project_id = $1 AND enabled = TRUE`
+// GetRulesByProjectID fetches all rules for a given project ID after verifying user ownership.
+func (r *Repository) GetRulesByProjectID(ctx context.Context, userID, projectID string) ([]Rule, error) {
+	// 1. Verify the user owns the project.
+	var ownerUserID string
+	err := r.db.QueryRowContext(ctx, "SELECT user_id FROM projects WHERE id = $1", projectID).Scan(&ownerUserID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, ErrProjectNotFound
+		}
+		return nil, fmt.Errorf("failed to verify project ownership for listing rules: %w", err)
+	}
 
-	rows, err := r.db.QueryContext(ctx, query, projectID)
+	if ownerUserID != userID {
+		return nil, ErrProjectNotFound
+	}
+
+	// 2. Fetch the rules for the project.
+	var rules []Rule
+	query := `SELECT id, project_id, type, value, enabled, created_at, updated_at FROM rules WHERE project_id = $1`
+
+
+rows, err := r.db.QueryContext(ctx, query, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query rules for project ID '%s': %w", projectID, err)
 	}
@@ -275,7 +262,8 @@ func (r *Repository) DeleteProject(ctx context.Context, projectID, userID string
 		return fmt.Errorf("failed to delete project: %w", err)
 	}
 
-	rowsAffected, err := result.RowsAffected()
+
+rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}

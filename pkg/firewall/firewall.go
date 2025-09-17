@@ -42,7 +42,9 @@ func Middleware(repo *storage.Repository, proxyFactory *proxy.Factory) func(next
 			log.Printf("Found project '%s' with upstream: %s\n", project.Name, project.UpstreamURL)
 
 			// 3. Get Rules for the Project from Database
-			rules, err := repo.GetRulesByProjectID(ctx, project.ID)
+			// The firewall uses the UserID associated with the project itself,
+			// not a userID from the request context.
+			rules, err := repo.GetRulesByProjectID(ctx, project.UserID, project.ID)
 			if err != nil {
 				log.Printf("Error getting rules for project '%s': %v\n", project.Name, err)
 				http.Error(w, fmt.Sprintf("Internal Server Error: Failed to get rules for project '%s'", project.Name), http.StatusInternalServerError)

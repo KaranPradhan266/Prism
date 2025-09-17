@@ -1,3 +1,25 @@
+# Design Decision: Firewall Rule Caching
+
+## Problem
+The firewall middleware fetches rules from the database for every incoming request. This is highly inefficient, as it results in a database query for each static asset (CSS, JS, images) and every API call to a proxied application. This will cause a significant performance bottleneck under load.
+
+## Solution: In-Memory Cache with Invalidation-on-Write
+To optimize performance, we will implement an in-memory cache for firewall rules.
+
+### How it Works:
+1.  **Cache Storage**: A global, thread-safe, in-memory map will be used to store rules, with the `projectID` as the key and the list of rules (`[]storage.Rule`) as the value.
+2.  **Firewall Middleware Logic**:
+    *   On an incoming request, the middleware will first check the cache for the project's rules.
+    *   **Cache Hit**: If rules are found, they are used immediately. No database query is performed.
+    *   **Cache Miss**: If rules are not found, they are fetched from the database and then stored in the cache for subsequent requests.
+3.  **Cache Invalidation**:
+    *   When a rule is created, updated, or deleted via the management API, the handler for that operation will be responsible for clearing the cache for that specific `projectID`.
+    *   This "invalidation-on-write" strategy ensures that any change to the rules will be immediately reflected, as the next request to the firewall for that project will trigger a cache miss and force a database fetch.
+
+This approach provides high performance for the vast majority of requests while ensuring data consistency when rules are modified.
+
+---
+
 # Design Decision: Path-Based Dynamic Routing
 
 This document captures the critical insight regarding how the firewall will handle requests for multiple, distinct projects and users.
