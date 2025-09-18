@@ -5,21 +5,20 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strings"
-
+	"prism/pkg/cache"
 	"prism/pkg/proxy"
 	"prism/pkg/storage"
+	"strings"
 )
 
-// Middleware uses a storage.Repository to check requests and dynamically proxy them.
-func Middleware(repo *storage.Repository, proxyFactory *proxy.Factory) func(next http.Handler) http.Handler {
+// Middleware uses a storage.Repository and a cache to check requests and dynamically proxy them.
+func Middleware(repo *storage.Repository, ruleCache cache.RuleCache, proxyFactory *proxy.Factory) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 			clientIP, _, _ := net.SplitHostPort(r.RemoteAddr)
 
 			// 1. Extract path prefix for project lookup
-			// Assuming path prefix is the first segment, e.g., /my-project/some/path -> /my-project
 			pathSegments := strings.Split(r.URL.Path, "/")
 			var pathPrefix string
 			if len(pathSegments) > 1 && pathSegments[1] != "" {
@@ -41,14 +40,21 @@ func Middleware(repo *storage.Repository, proxyFactory *proxy.Factory) func(next
 
 			log.Printf("Found project '%s' with upstream: %s\n", project.Name, project.UpstreamURL)
 
-			// 3. Get Rules for the Project from Database
-			// The firewall uses the UserID associated with the project itself,
-			// not a userID from the request context.
-			rules, err := repo.GetRulesByProjectID(ctx, project.UserID, project.ID)
-			if err != nil {
-				log.Printf("Error getting rules for project '%s': %v\n", project.Name, err)
-				http.Error(w, fmt.Sprintf("Internal Server Error: Failed to get rules for project '%s'", project.Name), http.StatusInternalServerError)
-				return
+			// 3. Get Rules for the Project (from cache or database)
+			rules, found := ruleCache.Get(project.ID)
+			if !found {
+				log.Printf("CACHE MISS for project %s. Fetching rules from DB.", project.ID)
+				//var dbRules []storage.Rule
+				dbRules, err := repo.GetRulesByProjectID(ctx, project.UserID, project.ID)
+				if err != nil {
+					log.Printf("Error getting rules for project '%s': %v\n", project.Name, err)
+					http.Error(w, fmt.Sprintf("Internal Server Error: Failed to get rules for project '%s'", project.Name), http.StatusInternalServerError)
+					return
+				}
+				rules = dbRules
+				ruleCache.Set(project.ID, rules) // Store in cache for next time
+			} else {
+				log.Printf("CACHE HIT for project %s.\n", project.ID)
 			}
 
 			// 4. Apply Firewall Rules

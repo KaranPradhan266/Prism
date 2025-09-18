@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 
+	"prism/pkg/cache"
 	"prism/pkg/storage"
 )
 
@@ -260,7 +261,7 @@ func DeleteProjectHandler(repo *storage.Repository) http.HandlerFunc {
 }
 
 // CreateRuleHandler handles the creation of new rules for a project.
-func CreateRuleHandler(repo *storage.Repository) http.HandlerFunc {
+func CreateRuleHandler(repo *storage.Repository, ruleCache cache.RuleCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -302,6 +303,10 @@ func CreateRuleHandler(repo *storage.Repository) http.HandlerFunc {
 			http.Error(w, "Failed to create rule", http.StatusInternalServerError)
 			return
 		}
+
+		// Invalidate cache for this project
+		ruleCache.Clear(projectID)
+		log.Printf("Cache cleared for project %s after rule creation.", projectID)
 
 		w.WriteHeader(http.StatusCreated)
 		json.NewEncoder(w).Encode(rule)
@@ -389,7 +394,7 @@ func GetRuleHandler(repo *storage.Repository) http.HandlerFunc {
 }
 
 // UpdateRuleHandler handles updating an existing rule.
-func UpdateRuleHandler(repo *storage.Repository) http.HandlerFunc {
+func UpdateRuleHandler(repo *storage.Repository, ruleCache cache.RuleCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -434,6 +439,10 @@ func UpdateRuleHandler(repo *storage.Repository) http.HandlerFunc {
 			return
 		}
 
+		// Invalidate cache for this project
+		ruleCache.Clear(projectID)
+		log.Printf("Cache cleared for project %s after rule update.", projectID)
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(updatedRule)
@@ -441,7 +450,7 @@ func UpdateRuleHandler(repo *storage.Repository) http.HandlerFunc {
 }
 
 // DeleteRuleHandler handles deleting a rule.
-func DeleteRuleHandler(repo *storage.Repository) http.HandlerFunc {
+func DeleteRuleHandler(repo *storage.Repository, ruleCache cache.RuleCache) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodDelete {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -473,6 +482,10 @@ func DeleteRuleHandler(repo *storage.Repository) http.HandlerFunc {
 			http.Error(w, "Failed to delete rule", http.StatusInternalServerError)
 			return
 		}
+
+		// Invalidate cache for this project
+		ruleCache.Clear(projectID)
+		log.Printf("Cache cleared for project %s after rule deletion.", projectID)
 
 		w.WriteHeader(http.StatusNoContent)
 	}
