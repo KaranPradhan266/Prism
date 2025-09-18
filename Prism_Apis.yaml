@@ -1,0 +1,410 @@
+type: collection.insomnia.rest/5.0
+name: Prism
+meta:
+  id: wrk_fcb438b7d2cd42069ecc1f5da9641e6e
+  created: 1758048506371
+  modified: 1758091515926
+  description: ""
+collection:
+  - url: http://localhost:8080/api/v1/projects
+    name: Insert Projects
+    meta:
+      id: req_13a44c32d60c465db6d5cc1cd69ccf74
+      created: 1758048506397
+      modified: 1758080246300
+      isPrivate: false
+      description: ""
+      sortKey: -1758048506397
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "todoist",
+          "path_prefix": "/todoist",
+          "upstream_url": "http://localhost:4000"
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MDgyMTcwLCJpYXQiOjE3NTgwNzg1NzAsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MDc4NTcwfV0sInNlc3Npb25faWQiOiIwY2ZkNjg2MS0yMjM1LTQxZWUtOWUwYS0wMjU2NGJiNjU4ZTIiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.VO1vP-glz-RLmXvw0pcxniEXZJAXi6lRkhI_JaHcI8w
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/api/v1/projects
+    name: List all Projects
+    meta:
+      id: req_c7ee8878debe46b084c4639d5b284f16
+      created: 1758049384699
+      modified: 1758079318767
+      isPrivate: false
+      description: ""
+      sortKey: -1758048506384.5
+    method: GET
+    body:
+      mimeType: application/json
+      text: ""
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MDUyMjMyLCJpYXQiOjE3NTgwNDg2MzIsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MDQ4NjMyfV0sInNlc3Npb25faWQiOiJjMzE3MzE2ZS1mNjE2LTQ5MGYtODllMC1jMWZkNmRmMmQ5N2EiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.JFmRjerHXr88H_IELPWs0o855FV3SX4aQuaN7OD4crU
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/api/v1/projects/c26cdd16-17fe-49f5-b98a-53e88e11f444
+    name: Project by Id
+    meta:
+      id: req_9155af45965b42c1a95cfbb8f8948c4c
+      created: 1758051030756
+      modified: 1758051189683
+      isPrivate: false
+      description: ""
+      sortKey: -1758048506297
+    method: GET
+    body:
+      mimeType: application/json
+      text: ""
+    parameters:
+      - id: pair_7bdf4bce6f7e47f286f04dcc5f5df450
+        name: ""
+        value: ""
+        description: ""
+        disabled: false
+      - id: pair_8c5480cb0b3c4926b90380cd71b9b7c2
+        name: ""
+        value: ""
+        description: ""
+        disabled: false
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MDUyMjMyLCJpYXQiOjE3NTgwNDg2MzIsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MDQ4NjMyfV0sInNlc3Npb25faWQiOiJjMzE3MzE2ZS1mNjE2LTQ5MGYtODllMC1jMWZkNmRmMmQ5N2EiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.JFmRjerHXr88H_IELPWs0o855FV3SX4aQuaN7OD4crU
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/api/v1/projects/fe277114-0af4-4980-9e38-349171535f26
+    name: Update Project by ID
+    meta:
+      id: req_8caed8e074934b4184788e1de83bd487
+      created: 1758057480459
+      modified: 1758057615257
+      isPrivate: false
+      description: ""
+      sortKey: -1758048506247
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+          "name": "Updating Project-name"
+        }
+    parameters:
+      - id: pair_7bdf4bce6f7e47f286f04dcc5f5df450
+        name: ""
+        value: ""
+        description: ""
+        disabled: false
+      - id: pair_8c5480cb0b3c4926b90380cd71b9b7c2
+        name: ""
+        value: ""
+        description: ""
+        disabled: false
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MDYxMTk2LCJpYXQiOjE3NTgwNTc1OTYsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MDU3NTk2fV0sInNlc3Npb25faWQiOiI2MmRjMWZhOS1kYzk1LTQ0N2YtYTk3Ny0xMThhNGUyY2E3M2EiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.BVoXZSyJMNVcYK7YTmLpqf6WLGowvkte9oritSvBM4s
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/api/v1/projects/fe277114-0af4-4980-9e38-349171535f26
+    name: Delete Project by ID
+    meta:
+      id: req_b216ae4c5e3b4845b59432c6d5b7f609
+      created: 1758058465297
+      modified: 1758058473799
+      isPrivate: false
+      description: ""
+      sortKey: -1758048506197
+    method: DELETE
+    body:
+      mimeType: application/json
+      text: ""
+    parameters:
+      - id: pair_7bdf4bce6f7e47f286f04dcc5f5df450
+        name: ""
+        value: ""
+        description: ""
+        disabled: false
+      - id: pair_8c5480cb0b3c4926b90380cd71b9b7c2
+        name: ""
+        value: ""
+        description: ""
+        disabled: false
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MDYxMTk2LCJpYXQiOjE3NTgwNTc1OTYsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MDU3NTk2fV0sInNlc3Npb25faWQiOiI2MmRjMWZhOS1kYzk1LTQ0N2YtYTk3Ny0xMThhNGUyY2E3M2EiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.BVoXZSyJMNVcYK7YTmLpqf6WLGowvkte9oritSvBM4s
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/api/v1/projects/6e9f18f5-8b57-49d7-893b-c462f5419c68/rules
+    name: Insert rules for Projects
+    meta:
+      id: req_d1c1ee6de6294fad99402d54ffc31b0a
+      created: 1758078668784
+      modified: 1758090770943
+      isPrivate: false
+      description: ""
+      sortKey: -1758048506097
+    method: POST
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"type": "keyword_block", 
+        	"value": "secret",
+        	"enabled": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MDgyMTcwLCJpYXQiOjE3NTgwNzg1NzAsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MDc4NTcwfV0sInNlc3Npb25faWQiOiIwY2ZkNjg2MS0yMjM1LTQxZWUtOWUwYS0wMjU2NGJiNjU4ZTIiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.VO1vP-glz-RLmXvw0pcxniEXZJAXi6lRkhI_JaHcI8w
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/api/v1/projects/6e9f18f5-8b57-49d7-893b-c462f5419c68/rules
+    name: List all Rules for Projects
+    meta:
+      id: req_c8481054cd6e45e9a7d76b174a00ca41
+      created: 1758079339323
+      modified: 1758091146170
+      isPrivate: false
+      description: ""
+      sortKey: -1758048505997
+    method: GET
+    body:
+      mimeType: application/json
+      text: ""
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MDkzNDQxLCJpYXQiOjE3NTgwODk4NDEsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MDg5ODQxfV0sInNlc3Npb25faWQiOiJhMjU2YWNkMi1kMmFiLTQwZWEtOTIyNC1iZTEwMTEyMzdkMjkiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.aFKVCocM1dMBhToLrA-C6MuD4zh8FObvy0tSPxkFDGk
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/api/v1/projects/6e9f18f5-8b57-49d7-893b-c462f5419c68/rules/210f4740-bce4-43b3-b3a5-28ebd3220a40
+    name: Get Rule for Projects
+    meta:
+      id: req_c1088e3618f249398efb4f0c9d16dd22
+      created: 1758089779833
+      modified: 1758089940412
+      isPrivate: false
+      description: ""
+      sortKey: -1758048505947
+    method: GET
+    body:
+      mimeType: application/json
+      text: ""
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MDkzNDQxLCJpYXQiOjE3NTgwODk4NDEsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MDg5ODQxfV0sInNlc3Npb25faWQiOiJhMjU2YWNkMi1kMmFiLTQwZWEtOTIyNC1iZTEwMTEyMzdkMjkiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.aFKVCocM1dMBhToLrA-C6MuD4zh8FObvy0tSPxkFDGk
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/api/v1/projects/6e9f18f5-8b57-49d7-893b-c462f5419c68/rules/368d5ac8-6378-4a85-84f9-8efc98210996
+    name: Update Rule for Projects
+    meta:
+      id: req_314c052cd306405bbb0d189b7fb500b7
+      created: 1758090645117
+      modified: 1758166574620
+      isPrivate: false
+      description: ""
+      sortKey: -1758048505897
+    method: PUT
+    body:
+      mimeType: application/json
+      text: |-
+        {
+        	"enabled": true
+        }
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MTcwMTA4LCJpYXQiOjE3NTgxNjY1MDgsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MTY2NTA4fV0sInNlc3Npb25faWQiOiI0ZGJmYzg5MS01MjI0LTRiOTYtOTVlNS0yOTFjNTJmZWRlMzAiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.GWk6NNpSnD-dVOvrgPjTpfm3bCF9Z9OPeKKee_iqFz0
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+  - url: http://localhost:8080/api/v1/projects/6e9f18f5-8b57-49d7-893b-c462f5419c68/rules/210f4740-bce4-43b3-b3a5-28ebd3220a40
+    name: Delete Rule for Project
+    meta:
+      id: req_2a73ac08b8cf4f4daa88a235a8065056
+      created: 1758091773292
+      modified: 1758091781369
+      isPrivate: false
+      description: ""
+      sortKey: -1758048505847
+    method: DELETE
+    body:
+      mimeType: application/json
+      text: ""
+    headers:
+      - name: Content-Type
+        value: application/json
+        id: pair_0b5a6ee9ff9f4f009b5ca4207c575617
+      - name: User-Agent
+        value: insomnia/11.6.0
+        id: pair_6a0a74e8c2364eb78df290243ae0aeda
+      - id: pair_9c110dbd4c1b4a79a57301e8f7188080
+        name: Authorization
+        value: Bearer
+          eyJhbGciOiJIUzI1NiIsImtpZCI6IlJwTWNOSGEvdUs3S0J2bzQiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2N5cWJ6enp2a3JqbW5ndm9zemFmLnN1cGFiYXNlLmNvL2F1dGgvdjEiLCJzdWIiOiIzNGM3NzIxZC0yOTVhLTQ5MWUtODYwYy01ZDE1ODc0YmNkY2UiLCJhdWQiOiJhdXRoZW50aWNhdGVkIiwiZXhwIjoxNzU4MDkzNDQxLCJpYXQiOjE3NTgwODk4NDEsImVtYWlsIjoia2FwMjY2dXNAZ21haWwuY29tIiwicGhvbmUiOiIiLCJhcHBfbWV0YWRhdGEiOnsicHJvdmlkZXIiOiJlbWFpbCIsInByb3ZpZGVycyI6WyJlbWFpbCJdfSwidXNlcl9tZXRhZGF0YSI6eyJlbWFpbCI6ImthcDI2NnVzQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJwaG9uZV92ZXJpZmllZCI6ZmFsc2UsInN1YiI6IjM0Yzc3MjFkLTI5NWEtNDkxZS04NjBjLTVkMTU4NzRiY2RjZSJ9LCJyb2xlIjoiYXV0aGVudGljYXRlZCIsImFhbCI6ImFhbDEiLCJhbXIiOlt7Im1ldGhvZCI6InBhc3N3b3JkIiwidGltZXN0YW1wIjoxNzU4MDg5ODQxfV0sInNlc3Npb25faWQiOiJhMjU2YWNkMi1kMmFiLTQwZWEtOTIyNC1iZTEwMTEyMzdkMjkiLCJpc19hbm9ueW1vdXMiOmZhbHNlfQ.aFKVCocM1dMBhToLrA-C6MuD4zh8FObvy0tSPxkFDGk
+        description: ""
+        disabled: false
+    settings:
+      renderRequestBody: true
+      encodeUrl: true
+      followRedirects: global
+      cookies:
+        send: true
+        store: true
+      rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_a1553a9ce5d405941cbaaad0ef1237b3022b9f8a
+    created: 1758048506373
+    modified: 1758048506373
+environments:
+  name: Base Environment
+  meta:
+    id: env_a1553a9ce5d405941cbaaad0ef1237b3022b9f8a
+    created: 1758048506372
+    modified: 1758048506372
+    isPrivate: false
