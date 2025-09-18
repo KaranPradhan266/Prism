@@ -15,37 +15,26 @@ This document summarizes the current state, architectural decisions, and immedia
 - **Modular Design**: Code is organized into standard Go packages:
     - `cmd/prism`: Contains `main.go`, the application entry point.
     - `pkg/api`: Handles API endpoints.
+    - `pkg/cache`: A thread-safe, in-memory caching component.
     - `pkg/firewall`: Contains firewall rules logic (`Middleware`).
     - `pkg/proxy`: Contains reverse proxy logic (`NewReverseProxy`, `Factory`).
     - `pkg/storage`: Handles database connection and data access.
 
 ### 2.2 Routing Strategy
-- **Path-Based Routing**: The application uses a central `http.ServeMux` to route requests based on URL path:
-    - `/<project_name>`: Dynamically routed to the Reverse Proxy Module.
-    - `/user/<username>`: Will serve the Admin Dashboard UI (future).
-    - `/api/...`: Will serve the Management API.
+- **Path-Based Routing**: The application uses a central `http.ServeMux` to route requests based on URL path.
 
-### 2.3 Frontend Applications
-- **Protected App**: `my-test-app` (React SPA on `http://localhost:3000`) is the application *protected by* Prism, not Prism's dashboard.
-- **Management Dashboard**: A separate, future React application will interact with Prism's `/api/...` endpoints.
-
-### 2.4 Authentication & Database
-- **Authentication**: **Supabase Auth (Local JWT Verification)**.
-- **Database**: **Supabase Postgres** (cloud-hosted).
-- **Configuration**: `DATABASE_URL` is loaded from a `.env` file.
-
-## 2.5 Current Functionality (Working & Tested)
-- **Application Startup**: `go run ./cmd/prism`.
-- **Database Connection**: Successfully connects to Supabase Postgres.
-- **Dynamic Routing & Proxying**: Correctly identifies projects by `path_prefix`, rewrites URLs, and proxies traffic.
-- **Database-Driven Firewall Rules**: Applies `ip_block` and `keyword_block` rules fetched from the database for each project.
-- **Management API (Protected by Supabase JWT Auth)**:
-    - Full CRUD for Projects (`/api/v1/projects`).
-    - Full CRUD for Rules (`/api/v1/projects/{projectId}/rules`).
+### 2.3 Current Functionality (Working & Tested)
+- **Core Backend**: A secure, multi-tenant reverse proxy and firewall.
+- **Management API**: A full CRUD API for managing Projects and their associated firewall Rules.
+- **Performance Optimization**: An in-memory cache for firewall rules is implemented to minimize database lookups on high-traffic routes. The cache is automatically invalidated when rules are changed via the API.
 
 ## 3. Immediate Next Step
 
-- **Implement Firewall Rule Caching**: To improve performance, implement an in-memory cache for firewall rules. The cache will be invalidated whenever a rule is created, updated, or deleted via the API. This avoids costly database lookups on every single request that passes through the firewall.
+The core backend API is feature-complete. The next phase can be chosen from the following major goals outlined in the project roadmap:
+
+- **1. Begin React Dashboard (Phase 5):** Build the frontend UI to consume the completed management API.
+- **2. Containerize the Application (Phase 6):** Create a `Dockerfile` and `docker-compose.yml` to make the project portable and easy to deploy.
+- **3. Expand Firewall Features (Phase 4):** Implement more advanced DPI, such as inspecting response bodies for sensitive data.
 
 ## 4. Key Credentials (User's Responsibility)
 
@@ -55,8 +44,3 @@ This document summarizes the current state, architectural decisions, and immedia
 - **Supabase JWT Secret** (used for local verification, stored in `.env` as `SUPABASE_JWT_SECRET`)
 - **Supabase Database Connection String** (Transaction Pooler, stored in `.env` as `DATABASE_URL`)
 - **Supabase Database Password**
-
-## 5. Important Notes
-
-- `CLERK_SECRET_KEY` is no longer used.
-- `DATABASE_URL` is crucial for application startup.
