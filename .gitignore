@@ -2,9 +2,6 @@
 prism
 prism.exe
 
-# Node dependencies
-/node_modules
-
 # Env files
 .env
 

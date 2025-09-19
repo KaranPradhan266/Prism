@@ -4,27 +4,39 @@ import { Auth } from '@supabase/auth-ui-react'
 import {
   ThemeSupa,
 } from '@supabase/auth-ui-shared'
-import { createClient } from '@supabase/supabase-js';
 import { useNavigate } from 'react-router-dom';
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from '../supabaseClient';
+import { useEffect } from 'react';
 
 const Login = () => {
   const navigate = useNavigate();
 
-  supabase.auth.onAuthStateChange(async (event) => {
-    if (event === "SIGNED_IN") {
-      navigate('/welcome');
-    }
-  });
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate('/welcome');
+      }
+    };
+
+    checkSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        navigate('/welcome');
+      }
+    });
+
+    return () => {
+      subscription?.unsubscribe();
+    };
+  }, [navigate]);
 
   return (
     <Auth
       supabaseClient={supabase}
       appearance={{ theme: ThemeSupa }}
+      providers={[]}
     />
   );
 }
