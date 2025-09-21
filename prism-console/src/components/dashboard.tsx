@@ -14,14 +14,14 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
 import { ModeToggle } from "./mode-toggle"
-import React, { useEffect, useState } from 'react';
-import { getProjects, getRulesForProject } from '@/lib/api';
+import React, { useState } from 'react';
+import { getProjects } from '@/lib/api';
 import { useSession } from './SessionProvider';
-import ProjectDetails from "./ProjectDetails"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Clock, ExternalLink, Folder, GitBranch } from "lucide-react"
+import { useQuery } from "@tanstack/react-query";
 
 interface Project {
   id: string;
@@ -212,26 +212,14 @@ const ProjectCard = ({ project }: { project: Project }) => {
 
 export default function Dashboard() {
   const { session } = useSession();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
-  useEffect(() => {
-    if (session) {
-      getProjects(session)
-        .then(data => {
-          setProjects(data);
-          setLoading(false);
-        })
-        .catch(err => {
-          setError(err.message);
-          setLoading(false);
-        });
-    }
-  }, [session]);
+  const { data: projects, error, isLoading } = useQuery<Project[], Error>({
+    queryKey: ['projects', session],
+    queryFn: () => getProjects(session!),
+    enabled: !!session,
+  });
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
@@ -244,7 +232,7 @@ export default function Dashboard() {
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-destructive mb-2">Error</h2>
-          <p className="text-muted-foreground">{error}</p>
+          <p className="text-muted-foreground">{error.message}</p>
         </div>
       </div>
     );
@@ -291,7 +279,7 @@ export default function Dashboard() {
             </div>
             
             <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {projects.map(project => (
+              {projects?.map(project => (
                 <ProjectCard key={project.id} project={project} />
               ))}
             </div>
@@ -303,16 +291,16 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-background rounded-lg p-4 border">
                 <h4 className="text-sm font-medium text-muted-foreground">Total Projects</h4>
-                <p className="text-2xl font-bold">{projects.length}</p>
+                <p className="text-2xl font-bold">{projects?.length}</p>
               </div>
               <div className="bg-background rounded-lg p-4 border">
                 <h4 className="text-sm font-medium text-muted-foreground">Active Projects</h4>
-                <p className="text-2xl font-bold">{projects.filter(p => p.Status === 'active').length}</p>
+                <p className="text-2xl font-bold">{projects?.filter(p => p.Status === 'active').length}</p>
               </div>
               <div className="bg-background rounded-lg p-4 border">
                 <h4 className="text-sm font-medium text-muted-foreground">Security Projects</h4>
                 <p className="text-2xl font-bold">
-                  {projects.filter(p => 
+                  {projects?.filter(p => 
                     p.name.toLowerCase().includes('firewall') || 
                     p.name.toLowerCase().includes('security') || 
                     p.name.toLowerCase().includes('ngfw')
