@@ -14,6 +14,7 @@ type Project struct {
 	UpstreamURL string    `json:"upstream_url"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+	Status      string    `json:"status`
 }
 
 // Rule represents a firewall rule stored in the database.

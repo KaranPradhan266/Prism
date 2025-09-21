@@ -170,10 +170,9 @@ func (r *Repository) UpdateProject(ctx context.Context, projectID, userID string
 // GetProjectsByUserID fetches all projects for a given user ID.
 func (r *Repository) GetProjectsByUserID(ctx context.Context, userID string) ([]Project, error) {
 	var projects []Project
-	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at FROM projects WHERE user_id = $1`
+	query := `SELECT id, user_id, name, path_prefix, upstream_url, created_at, updated_at, status FROM projects WHERE user_id = $1`
 
-
-rows, err := r.db.QueryContext(ctx, query, userID)
+	rows, err := r.db.QueryContext(ctx, query, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query projects for user ID '%s': %w", userID, err)
 	}
@@ -189,6 +188,7 @@ rows, err := r.db.QueryContext(ctx, query, userID)
 			&project.UpstreamURL,
 			&project.CreatedAt,
 			&project.UpdatedAt,
+			&project.Status,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan project row: %w", err)
@@ -224,8 +224,7 @@ func (r *Repository) GetRulesByProjectID(ctx context.Context, userID, projectID 
 	var rules []Rule
 	query := `SELECT id, project_id, type, value, enabled, created_at, updated_at FROM rules WHERE project_id = $1`
 
-
-rows, err := r.db.QueryContext(ctx, query, projectID)
+	rows, err := r.db.QueryContext(ctx, query, projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query rules for project ID '%s': %w", projectID, err)
 	}
@@ -357,8 +356,7 @@ func (r *Repository) DeleteRule(ctx context.Context, userID, projectID, ruleID s
 		return fmt.Errorf("failed to delete rule: %w", err)
 	}
 
-
-rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected after delete rule: %w", err)
 	}
@@ -380,8 +378,7 @@ func (r *Repository) DeleteProject(ctx context.Context, projectID, userID string
 		return fmt.Errorf("failed to delete project: %w", err)
 	}
 
-
-rowsAffected, err := result.RowsAffected()
+	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("failed to get rows affected: %w", err)
 	}
