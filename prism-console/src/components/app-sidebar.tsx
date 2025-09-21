@@ -16,6 +16,7 @@ import {
 
 import { NavMain } from "@/components/nav-main"
 import { NavProjects } from "@/components/nav-projects"
+import logo from "@/assets/logo.png"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -36,59 +37,67 @@ const data = {
   },
   navMain: [
     {
-      title: "Playground",
+      title: "Mointoring & Analytics",
       url: "#",
       icon: SquareTerminal,
       isActive: true,
       items: [
         {
-          title: "History",
+          title: "Traffic Analysis",
           url: "#",
         },
         {
-          title: "Starred",
+          title: "Connection States",
           url: "#",
         },
         {
-          title: "Settings",
+          title: "Threat Detection",
+          url: "#",
+        },
+        {
+          title: "Performance Metrics",
           url: "#",
         },
       ],
     },
     {
-      title: "Models",
+      title: "Configuration",
       url: "#",
       icon: Bot,
       items: [
         {
-          title: "Genesis",
+          title: "Proxy Settings",
           url: "#",
         },
         {
-          title: "Explorer",
+          title: "Network Policies",
           url: "#",
         },
         {
-          title: "Quantum",
+          title: "DPI Signature",
+          url: "#",
+        },
+        {
+          title: "Alerting",
           url: "#",
         },
       ],
     },
     {
-      title: "Documentation",
+      title: "Deployment",
       url: "#",
       icon: BookOpen,
       items: [
         {
-          title: "Introduction",
+          title: "Container Status",
           url: "#",
         },
         {
-          title: "Get Started",
+          title: "Backend Services",
           url: "#",
         },
         {
-          title: "Tutorials",
+          title: "Health Checks",
           url: "#",
         },
         {
@@ -98,24 +107,24 @@ const data = {
       ],
     },
     {
-      title: "Settings",
+      title: "Reports & Logs",
       url: "#",
       icon: Settings2,
       items: [
         {
-          title: "General",
+          title: "Security Reports",
           url: "#",
         },
         {
-          title: "Team",
+          title: "Access Logs",
           url: "#",
         },
         {
-          title: "Billing",
+          title: "Audit Trail",
           url: "#",
         },
         {
-          title: "Limits",
+          title: "Export Data",
           url: "#",
         },
       ],
@@ -161,10 +170,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <a href="#">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Command className="size-4" />
+                  <img src={logo} />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Acme Inc</span>
+                  <span className="truncate font-medium">Prism</span>
                   <span className="truncate text-xs">Enterprise</span>
                 </div>
               </a>
@@ -174,7 +183,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        {/* <NavProjects projects={data.projects} /> */}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
