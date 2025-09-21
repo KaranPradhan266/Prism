@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useSession } from "./SessionProvider"
 import { useNavigate } from "react-router-dom"
 
@@ -16,9 +16,11 @@ export function LoginForm({
   const { supabase, session } = useSession()
   const navigate = useNavigate()
 
-  if (session) {
-    navigate("/welcome")
-  }
+  useEffect(() => {
+    if (session) {
+      navigate("/welcome")
+    }
+  }, [session, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
