@@ -1,10 +1,192 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
+import { useSession } from './SessionProvider';
+import { useQuery } from '@tanstack/react-query';
+import { getRulesForProject } from '@/lib/api';
+import { MoreVertical, Edit, Trash2, Power, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Download } from 'lucide-react';
+
+
+interface Rule {
+  id: string;
+  type: string;
+  value: string;
+  enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
 
 const ProjectDetails = () => {
   const location = useLocation();
   const { project } = location.state || {};
+  const { session } = useSession();
+
+  // State for filtering, sorting, and selection
+  const [filterValue, setFilterValue] = useState('');
+  const [sortConfig, setSortConfig] = useState<{
+    key: keyof Rule | null;
+    direction: 'asc' | 'desc';
+  }>({ key: null, direction: 'asc' });
+  const [selectedRules, setSelectedRules] = useState<string[]>([]);
+
+  const { data: rules, error, isLoading } = useQuery<Rule[], Error>({
+    queryKey: ['rules', session],
+    queryFn: () => getRulesForProject(session!, project.id),
+    enabled: !!session,
+  });
+
+  const handleBulkExport = () => {
+  const selectedRulesData = rules?.filter(rule => selectedRules.includes(rule.id));
+  console.log('Bulk export rules:', selectedRulesData);
+  
+  // Create CSV content
+  const csvHeaders = ['ID', 'Type', 'Value', 'Status', 'Created At', 'Updated At'];
+  const csvRows = selectedRulesData?.map(rule => [
+    rule.id,
+    rule.type,
+    rule.value,
+    rule.enabled ? 'Active' : 'Inactive',
+    rule.created_at,
+    rule.updated_at
+  ]);
+
+  const csvContent = [
+    csvHeaders.join(','),
+    ...(csvRows?.map(row => row.join(',')) || [])
+  ].join('\n');
+
+  // Download CSV file
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `rules-export-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+};
+
+  // Filtered and sorted rules
+  const processedRules = useMemo(() => {
+    if (!rules) return [];
+
+    let filtered = rules.filter(rule => 
+      rule.type.toLowerCase().includes(filterValue.toLowerCase()) ||
+      rule.value.toLowerCase().includes(filterValue.toLowerCase()) ||
+      rule.id.toLowerCase().includes(filterValue.toLowerCase())
+    );
+
+    if (sortConfig.key) {
+      filtered.sort((a, b) => {
+        const aValue = a[sortConfig.key!];
+        const bValue = b[sortConfig.key!];
+        
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          return sortConfig.direction === 'asc' 
+            ? aValue.localeCompare(bValue)
+            : bValue.localeCompare(aValue);
+        }
+        
+        if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
+          return sortConfig.direction === 'asc'
+            ? (aValue === bValue ? 0 : aValue ? 1 : -1)
+            : (aValue === bValue ? 0 : aValue ? -1 : 1);
+        }
+        
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [rules, filterValue, sortConfig]);
+
+  // Handle sorting
+  const handleSort = (key: keyof Rule) => {
+    setSortConfig(current => ({
+      key,
+      direction: current.key === key && current.direction === 'asc' ? 'desc' : 'asc'
+    }));
+  };
+
+  // Handle checkbox selection
+  const handleSelectRule = (ruleId: string) => {
+    setSelectedRules(current => 
+      current.includes(ruleId)
+        ? current.filter(id => id !== ruleId)
+        : [...current, ruleId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    setSelectedRules(current => 
+      current.length === processedRules.length 
+        ? [] 
+        : processedRules.map(rule => rule.id)
+    );
+  };
+
+  const getSortIcon = (key: keyof Rule) => {
+    if (sortConfig.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="ml-2 h-4 w-4" />
+      : <ChevronDown className="ml-2 h-4 w-4" />;
+  };
+
+  // Action handlers
+  const handleEdit = (rule: Rule) => {
+    console.log('Edit rule:', rule);
+    // Add your edit logic here
+  };
+
+  const handleDelete = (rule: Rule) => {
+    console.log('Delete rule:', rule);
+    // Add your delete logic here
+  };
+
+  const handleToggleStatus = (rule: Rule) => {
+    console.log('Toggle status for rule:', rule);
+    // Add your enable/disable logic here
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-destructive mb-2">Error</h2>
+          <p className="text-muted-foreground">{error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!project) {
     return <div>Project not found.</div>;
@@ -18,7 +200,7 @@ const ProjectDetails = () => {
 
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
-      <div>
+      <div className="mb-6">
         <h1 className="text-3xl font-bold mb-4">{project.name}</h1>
         <p>{project.description}</p>
         <p>Path: {project.path_prefix}</p>
@@ -27,6 +209,152 @@ const ProjectDetails = () => {
         <p>Updated at: {project.updated_at}</p>
         <p>Upstream URL: {project.upstream_url}</p>
       </div>
+
+      {/* Filter Input */}
+      <div className="mb-4 flex items-center gap-4">
+        <Input
+          placeholder="Filter rules..."
+          value={filterValue}
+          onChange={(e) => setFilterValue(e.target.value)}
+          className="max-w-sm"
+        />
+        {selectedRules.length > 0 && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBulkExport}
+          className="flex items-center gap-1"
+        >
+          <Download className="h-4 w-4" />
+          Export Selected ({selectedRules.length})
+        </Button>
+      )}
+      </div>
+
+      {/* Selected Rules Info */}
+      {selectedRules.length > 0 && (
+        <div className="mb-4 p-3 bg-muted rounded-md">
+          <p className="text-sm">
+            {selectedRules.length} rule{selectedRules.length !== 1 ? 's' : ''} selected
+          </p>
+        </div>
+      )}
+      
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-12">
+              <Checkbox
+                checked={selectedRules.length === processedRules.length && processedRules.length > 0}
+                onCheckedChange={handleSelectAll}
+                aria-label="Select all"
+              />
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                onClick={() => handleSort('id')}
+                className="h-auto p-0 font-medium hover:bg-transparent [padding-inline:unset!important]"
+              >
+                ID
+                {getSortIcon('id')}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                onClick={() => handleSort('type')}
+                className="h-auto p-0 font-medium hover:bg-transparent [padding-inline:unset!important]"
+              >
+                Type
+                {getSortIcon('type')}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                onClick={() => handleSort('value')}
+                className="h-auto p-0 font-medium hover:bg-transparent [padding-inline:unset!important]"
+              >
+                Value
+                {getSortIcon('value')}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
+                onClick={() => handleSort('enabled')}
+                className="h-auto p-0 font-medium hover:bg-transparent [padding-inline:unset!important]"
+              >
+                Status
+                {getSortIcon('enabled')}
+              </Button>
+            </TableHead>
+            <TableHead className="w-12">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {processedRules?.map((rule) => (
+            <TableRow 
+              key={rule.id}
+              className={selectedRules.includes(rule.id) ? 'bg-muted/50' : ''}
+            >
+              <TableCell>
+                <Checkbox
+                  checked={selectedRules.includes(rule.id)}
+                  onCheckedChange={() => handleSelectRule(rule.id)}
+                  aria-label={`Select rule ${rule.id}`}
+                />
+              </TableCell>
+              <TableCell>{rule.id}</TableCell>
+              <TableCell>{rule.type}</TableCell>
+              <TableCell>{rule.value}</TableCell>
+              <TableCell>
+                <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                  rule.enabled 
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' 
+                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
+                }`}>
+                  {rule.enabled ? 'Active' : 'Inactive'}
+                </span>
+              </TableCell>
+              <TableCell>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0">
+                      <span className="sr-only">Open menu</span>
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem 
+                      onClick={() => handleEdit(rule)}
+                      className="cursor-pointer"
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleToggleStatus(rule)}
+                      className="cursor-pointer"
+                    >
+                      <Power className="mr-2 h-4 w-4" />
+                      {rule.enabled ? 'Disable' : 'Enable'}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      onClick={() => handleDelete(rule)}
+                      className="cursor-pointer text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </AppLayout>
   );
 };
