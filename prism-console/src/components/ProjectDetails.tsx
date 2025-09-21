@@ -19,11 +19,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Download } from 'lucide-react';
-
 
 interface Rule {
   id: string;
@@ -47,6 +56,15 @@ const ProjectDetails = () => {
   }>({ key: null, direction: 'asc' });
   const [selectedRules, setSelectedRules] = useState<string[]>([]);
 
+  // Dialog state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingRule, setEditingRule] = useState<Rule | null>(null);
+  const [editForm, setEditForm] = useState({
+    type: '',
+    value: '',
+    enabled: true
+  });
+
   const { data: rules, error, isLoading } = useQuery<Rule[], Error>({
     queryKey: ['rules', session],
     queryFn: () => getRulesForProject(session!, project.id),
@@ -54,38 +72,38 @@ const ProjectDetails = () => {
   });
 
   const handleBulkExport = () => {
-  const selectedRulesData = rules?.filter(rule => selectedRules.includes(rule.id));
-  console.log('Bulk export rules:', selectedRulesData);
-  
-  // Create CSV content
-  const csvHeaders = ['ID', 'Type', 'Value', 'Status', 'Created At', 'Updated At'];
-  const csvRows = selectedRulesData?.map(rule => [
-    rule.id,
-    rule.type,
-    rule.value,
-    rule.enabled ? 'Active' : 'Inactive',
-    rule.created_at,
-    rule.updated_at
-  ]);
+    const selectedRulesData = rules?.filter(rule => selectedRules.includes(rule.id));
+    console.log('Bulk export rules:', selectedRulesData);
+    
+    // Create CSV content
+    const csvHeaders = ['ID', 'Type', 'Value', 'Status', 'Created At', 'Updated At'];
+    const csvRows = selectedRulesData?.map(rule => [
+      rule.id,
+      rule.type,
+      rule.value,
+      rule.enabled ? 'Active' : 'Inactive',
+      rule.created_at,
+      rule.updated_at
+    ]);
 
-  const csvContent = [
-    csvHeaders.join(','),
-    ...(csvRows?.map(row => row.join(',')) || [])
-  ].join('\n');
+    const csvContent = [
+      csvHeaders.join(','),
+      ...(csvRows?.map(row => row.join(',')) || [])
+    ].join('\n');
 
-  // Download CSV file
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  if (link.download !== undefined) {
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `rules-export-${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
-};
+    // Download CSV file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `rules-export-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
 
   // Filtered and sorted rules
   const processedRules = useMemo(() => {
@@ -155,8 +173,34 @@ const ProjectDetails = () => {
 
   // Action handlers
   const handleEdit = (rule: Rule) => {
-    console.log('Edit rule:', rule);
-    // Add your edit logic here
+    setEditingRule(rule);
+    setEditForm({
+      type: rule.type,
+      value: rule.value,
+      enabled: rule.enabled
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveChanges = () => {
+    if (!editingRule) return;
+    
+    // Here you would typically make an API call to update the rule
+    console.log('Saving changes for rule:', editingRule.id, editForm);
+    
+    // TODO: Implement API call to update rule
+    // updateRule(editingRule.id, editForm)
+    
+    // Close dialog and reset state
+    setIsEditDialogOpen(false);
+    setEditingRule(null);
+    setEditForm({ type: '', value: '', enabled: true });
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditDialogOpen(false);
+    setEditingRule(null);
+    setEditForm({ type: '', value: '', enabled: true });
   };
 
   const handleDelete = (rule: Rule) => {
@@ -219,16 +263,16 @@ const ProjectDetails = () => {
           className="max-w-sm"
         />
         {selectedRules.length > 0 && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleBulkExport}
-          className="flex items-center gap-1"
-        >
-          <Download className="h-4 w-4" />
-          Export Selected ({selectedRules.length})
-        </Button>
-      )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleBulkExport}
+            className="flex items-center gap-1"
+          >
+            <Download className="h-4 w-4" />
+            Export Selected ({selectedRules.length})
+          </Button>
+        )}
       </div>
 
       {/* Selected Rules Info */}
@@ -355,6 +399,73 @@ const ProjectDetails = () => {
           ))}
         </TableBody>
       </Table>
+
+      {/* Edit Rule Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Rule</DialogTitle>
+            <DialogDescription>
+              Make changes to the rule. Click save when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="rule-id" className="text-right">
+                ID
+              </Label>
+              <Input
+                id="rule-id"
+                value={editingRule?.id || ''}
+                className="col-span-3"
+                disabled
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="rule-type" className="text-right">
+                Type
+              </Label>
+              <Input
+                id="rule-type"
+                value={editForm.type}
+                onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="rule-value" className="text-right">
+                Value
+              </Label>
+              <Input
+                id="rule-value"
+                value={editForm.value}
+                onChange={(e) => setEditForm(prev => ({ ...prev, value: e.target.value }))}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="rule-enabled" className="text-right">
+                Enabled
+              </Label>
+              <div className="col-span-3">
+                <Switch
+                  id="rule-enabled"
+                  checked={editForm.enabled}
+                  onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, enabled: checked }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelEdit}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveChanges}>
+              Save changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </AppLayout>
   );
 };
