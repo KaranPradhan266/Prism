@@ -6,6 +6,7 @@ import Welcome from './components/welcome';
 import Projects from './components/Projects';
 import { ThemeProvider } from './components/theme-provider';
 import type { JSX } from 'react';
+import Dashboard from './components/dashboard';
 
 function App() {
   return (
@@ -14,7 +15,7 @@ function App() {
       <SessionProvider>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
-          <Route path="/welcome" element={<ProtectedRoute><Welcome /></ProtectedRoute>} />
+          <Route path="/welcome" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>
