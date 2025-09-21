@@ -18,7 +18,7 @@ export function LoginForm({
 
   useEffect(() => {
     if (session) {
-      navigate("/welcome")
+      navigate("/dashboard")
     }
   }, [session, navigate])
 
@@ -29,7 +29,7 @@ export function LoginForm({
       if (error) {
         console.error("Error logging in:", error.message)
       } else {
-        navigate("/welcome")
+        navigate("/dashboard")
       }
     } catch (error) {
       console.error("Error logging in:", error)

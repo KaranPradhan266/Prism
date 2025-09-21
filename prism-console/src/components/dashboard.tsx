@@ -1,20 +1,3 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/ui/sidebar"
-import { ModeToggle } from "./mode-toggle"
-import React, { useState } from 'react';
 import { getProjects } from '@/lib/api';
 import { useSession } from './SessionProvider';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card"
@@ -22,6 +5,15 @@ import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Clock, ExternalLink, Folder, GitBranch } from "lucide-react"
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "react-router-dom";
+import { AppLayout } from "./AppLayout";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface Project {
   id: string;
@@ -238,79 +230,62 @@ export default function Dashboard() {
     );
   }
 
+  const breadcrumbs = [
+    { label: "Prism NGFW" },
+    { label: "Projects Dashboard" },
+  ];
+
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <ModeToggle/>
-            <Separator
-              orientation="vertical"
-              className="mr-2 data-[orientation=vertical]:h-4"
-            />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">
-                    Prism NGFW
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Projects Dashboard</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-          <div className="space-y-4">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-              <p className="text-muted-foreground">
-                Manage your Prism NGFW projects and configurations
-              </p>
-            </div>
-            
-            <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <AppLayout breadcrumbs={breadcrumbs}>
+      <div className="space-y-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
+          <p className="text-muted-foreground">
+            Manage your Prism NGFW projects and configurations
+          </p>
+        </div>
+        
+        <div className="w-full px-12">
+          <Carousel opts={{ slidesToScroll: "auto" }}>
+            <CarouselContent>
               {projects?.map(project => (
-                <ProjectCard key={project.id} project={project} />
+                <CarouselItem key={project.id} className="md:basis-1/2 lg:basis-1/3">
+                  <Link to={`/projects/${project.id}`} state={{ project }}>
+                    <ProjectCard project={project} />
+                  </Link>
+                </CarouselItem>
               ))}
-            </div>
+            </CarouselContent>
+            <CarouselPrevious />
+            <CarouselNext />
+          </Carousel>
+        </div>
+      </div>
+      
+      {/* Stats or additional content area */}
+      <div className="bg-muted/50 min-h-[200px] flex-1 rounded-xl md:min-h-min p-6">
+        <h3 className="text-lg font-semibold mb-4">Project Statistics</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-background rounded-lg p-4 border">
+            <h4 className="text-sm font-medium text-muted-foreground">Total Projects</h4>
+            <p className="text-2xl font-bold">{projects?.length}</p>
           </div>
-          
-          {/* Stats or additional content area */}
-          <div className="bg-muted/50 min-h-[200px] flex-1 rounded-xl md:min-h-min p-6">
-            <h3 className="text-lg font-semibold mb-4">Project Statistics</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-background rounded-lg p-4 border">
-                <h4 className="text-sm font-medium text-muted-foreground">Total Projects</h4>
-                <p className="text-2xl font-bold">{projects?.length}</p>
-              </div>
-              <div className="bg-background rounded-lg p-4 border">
-                <h4 className="text-sm font-medium text-muted-foreground">Active Projects</h4>
-                <p className="text-2xl font-bold">{projects?.filter(p => p.Status === 'active').length}</p>
-              </div>
-              <div className="bg-background rounded-lg p-4 border">
-                <h4 className="text-sm font-medium text-muted-foreground">Security Projects</h4>
-                <p className="text-2xl font-bold">
-                  {projects?.filter(p => 
-                    p.name.toLowerCase().includes('firewall') || 
-                    p.name.toLowerCase().includes('security') || 
-                    p.name.toLowerCase().includes('ngfw')
-                  ).length}
-                </p>
-              </div>
-            </div>
+          <div className="bg-background rounded-lg p-4 border">
+            <h4 className="text-sm font-medium text-muted-foreground">Active Projects</h4>
+            <p className="text-2xl font-bold">{projects?.filter(p => p.Status === 'active').length}</p>
+          </div>
+          <div className="bg-background rounded-lg p-4 border">
+            <h4 className="text-sm font-medium text-muted-foreground">Security Projects</h4>
+            <p className="text-2xl font-bold">
+              {projects?.filter(p => 
+                p.name.toLowerCase().includes('firewall') || 
+                p.name.toLowerCase().includes('security') || 
+                p.name.toLowerCase().includes('ngfw')
+              ).length}
+            </p>
           </div>
         </div>
-      </SidebarInset>
-    </SidebarProvider>
+      </div>
+    </AppLayout>
   )
 }
