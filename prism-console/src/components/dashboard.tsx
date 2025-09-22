@@ -11,6 +11,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import ProjectCard from './projectCard';
+import ProjectCarousel from './projectCarousel';
 
 interface Project {
   id: string;
@@ -23,6 +24,8 @@ interface Project {
   Status: string;
   // Remove type field conflict and add it properly if needed
 }
+
+
 
 export default function Dashboard() {
   const { session } = useSession();
@@ -68,19 +71,7 @@ export default function Dashboard() {
         </div>
         
         <div className="w-full px-12">
-          <Carousel opts={{ slidesToScroll: "auto" }}>
-            <CarouselContent>
-              {projects?.map(project => (
-                <CarouselItem key={project.id} className="md:basis-1/2 lg:basis-1/3">
-                  <Link to={`/projects/${project.id}`} state={{ project }}>
-                    <ProjectCard project={project} />
-                  </Link>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <CarouselPrevious />
-            <CarouselNext />
-          </Carousel>
+          <ProjectCarousel projects={projects || []} />
         </div>
       </div>
       
