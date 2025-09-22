@@ -27,6 +27,7 @@ type UpdateProjectRequest struct {
 
 // CreateRuleRequest defines the structure for creating a new rule.
 type CreateRuleRequest struct {
+	Name    string `json: name`
 	Type    string `json:"type"`
 	Value   string `json:"value"`
 	Enabled bool   `json:"enabled"`
@@ -34,6 +35,7 @@ type CreateRuleRequest struct {
 
 // UpdateRuleRequest defines the structure for updating an existing rule.
 type UpdateRuleRequest struct {
+	Name    string  `json: name`
 	Type    *string `json:"type,omitempty"`
 	Value   *string `json:"value,omitempty"`
 	Enabled *bool   `json:"enabled,omitempty"`
@@ -293,7 +295,7 @@ func CreateRuleHandler(repo *storage.Repository, ruleCache cache.RuleCache) http
 			return
 		}
 
-		rule, err := repo.CreateRule(r.Context(), userID, projectID, req.Type, req.Value, req.Enabled)
+		rule, err := repo.CreateRule(r.Context(), userID, projectID, req.Name, req.Type, req.Value, req.Enabled)
 		if err != nil {
 			if err == storage.ErrProjectNotFound {
 				http.Error(w, "Not Found: Project not found or not owned by user", http.StatusNotFound)
@@ -424,7 +426,7 @@ func UpdateRuleHandler(repo *storage.Repository, ruleCache cache.RuleCache) http
 		}
 
 		// Update rule in the database
-		updatedRule, err := repo.UpdateRule(r.Context(), userID, projectID, ruleID, req.Type, req.Value, req.Enabled)
+		updatedRule, err := repo.UpdateRule(r.Context(), userID, projectID, ruleID, req.Name, req.Type, req.Value, req.Enabled)
 		if err != nil {
 			if err == storage.ErrRuleNotFound {
 				http.Error(w, "Not Found: Rule not found or you do not have permission to access it", http.StatusNotFound)

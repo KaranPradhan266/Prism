@@ -222,7 +222,7 @@ func (r *Repository) GetRulesByProjectID(ctx context.Context, userID, projectID 
 
 	// 2. Fetch the rules for the project.
 	var rules []Rule
-	query := `SELECT id, project_id, type, value, enabled, created_at, updated_at FROM rules WHERE project_id = $1`
+	query := `SELECT id, project_id, name, type, value, enabled, created_at, updated_at FROM rules WHERE project_id = $1`
 
 	rows, err := r.db.QueryContext(ctx, query, projectID)
 	if err != nil {
@@ -235,6 +235,7 @@ func (r *Repository) GetRulesByProjectID(ctx context.Context, userID, projectID 
 		err := rows.Scan(
 			&rule.ID,
 			&rule.ProjectID,
+			&rule.Name,
 			&rule.Type,
 			&rule.Value,
 			&rule.Enabled,
@@ -259,7 +260,7 @@ func (r *Repository) GetRulesByProjectID(ctx context.Context, userID, projectID 
 func (r *Repository) GetRuleByID(ctx context.Context, userID, projectID, ruleID string) (*Rule, error) {
 	rule := &Rule{}
 	query := `
-		SELECT r.id, r.project_id, r.type, r.value, r.enabled, r.created_at, r.updated_at
+		SELECT r.id, r.project_id, r.name, r.type, r.value, r.enabled, r.created_at, r.updated_at
 		FROM rules r
 		JOIN projects p ON r.project_id = p.id
 		WHERE r.id = $1 AND r.project_id = $2 AND p.user_id = $3`
@@ -267,6 +268,7 @@ func (r *Repository) GetRuleByID(ctx context.Context, userID, projectID, ruleID 
 	err := r.db.QueryRowContext(ctx, query, ruleID, projectID, userID).Scan(
 		&rule.ID,
 		&rule.ProjectID,
+		&rule.Name,
 		&rule.Type,
 		&rule.Value,
 		&rule.Enabled,
@@ -285,10 +287,14 @@ func (r *Repository) GetRuleByID(ctx context.Context, userID, projectID, ruleID 
 }
 
 // UpdateRule updates an existing rule, verifying ownership via a join to the projects table.
-func (r *Repository) UpdateRule(ctx context.Context, userID, projectID, ruleID string, ruleType, value *string, enabled *bool) (*Rule, error) {
+func (r *Repository) UpdateRule(ctx context.Context, userID, projectID, ruleID, name string, ruleType, value *string, enabled *bool) (*Rule, error) {
 	sets := []string{}
 	args := []interface{}{}
 	argCounter := 1
+
+	sets = append(sets, fmt.Sprintf("name = $%d", argCounter))
+	args = append(args, name)
+	argCounter++
 
 	if ruleType != nil {
 		sets = append(sets, fmt.Sprintf("type = $%d", argCounter))
@@ -320,13 +326,14 @@ func (r *Repository) UpdateRule(ctx context.Context, userID, projectID, ruleID s
 		SET %s, updated_at = NOW()
 		WHERE id = $%d AND project_id = $%d
 		  AND project_id IN (SELECT id FROM projects WHERE user_id = $%d)
-		RETURNING id, project_id, type, value, enabled, created_at, updated_at`,
+		RETURNING id, project_id, name, type, value, enabled, created_at, updated_at`,
 		strings.Join(sets, ", "), argCounter, argCounter+1, argCounter+2)
 
 	updatedRule := &Rule{}
 	err := r.db.QueryRowContext(ctx, query, args...).Scan(
 		&updatedRule.ID,
 		&updatedRule.ProjectID,
+		&updatedRule.Name,
 		&updatedRule.Type,
 		&updatedRule.Value,
 		&updatedRule.Enabled,
@@ -392,7 +399,7 @@ func (r *Repository) DeleteProject(ctx context.Context, projectID, userID string
 }
 
 // CreateRule adds a new rule to a project, verifying ownership first.
-func (r *Repository) CreateRule(ctx context.Context, userID, projectID, ruleType, value string, enabled bool) (*Rule, error) {
+func (r *Repository) CreateRule(ctx context.Context, userID, projectID, ruleName, ruleType, value string, enabled bool) (*Rule, error) {
 	// 1. Verify the user owns the project.
 	var ownerUserID string
 	err := r.db.QueryRowContext(ctx, "SELECT user_id FROM projects WHERE id = $1", projectID).Scan(&ownerUserID)
@@ -412,13 +419,14 @@ func (r *Repository) CreateRule(ctx context.Context, userID, projectID, ruleType
 	// 2. Insert the new rule.
 	rule := &Rule{}
 	query := `
-		INSERT INTO rules (project_id, type, value, enabled) 
-		VALUES ($1, $2, $3, $4) 
-		RETURNING id, project_id, type, value, enabled, created_at, updated_at
+		INSERT INTO rules (project_id, name, type, value, enabled) 
+		VALUES ($1, $2, $3, $4, $5) 
+		RETURNING id, project_id, name, type, value, enabled, created_at, updated_at
 	`
-	err = r.db.QueryRowContext(ctx, query, projectID, ruleType, value, enabled).Scan(
+	err = r.db.QueryRowContext(ctx, query, projectID, ruleName, ruleType, value, enabled).Scan(
 		&rule.ID,
 		&rule.ProjectID,
+		&rule.Name,
 		&rule.Type,
 		&rule.Value,
 		&rule.Enabled,

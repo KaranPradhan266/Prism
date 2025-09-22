@@ -36,6 +36,7 @@ import { Download } from 'lucide-react';
 
 interface Rule {
   id: string;
+  name: string;
   type: string;
   value: string;
   enabled: boolean;
@@ -62,6 +63,7 @@ const ProjectDetails = () => {
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [editForm, setEditForm] = useState({
     type: '',
+    name:'',
     value: '',
     enabled: true
   });
@@ -182,6 +184,7 @@ const ProjectDetails = () => {
     setEditingRule(rule);
     setEditForm({
       type: rule.type,
+      name: rule.name,
       value: rule.value,
       enabled: rule.enabled
     });
@@ -210,7 +213,7 @@ const ProjectDetails = () => {
       queryClient.invalidateQueries({ queryKey: ['rules', session] });
       setIsEditDialogOpen(false);
       setEditingRule(null);
-      setEditForm({ type: '', value: '', enabled: true });
+      setEditForm({ type: '', name: '', value: '', enabled: true });
     },
     onError: (error) => {
       // You can handle errors here, e.g., show a notification
@@ -248,7 +251,7 @@ const ProjectDetails = () => {
   const handleCancelEdit = () => {
     setIsEditDialogOpen(false);
     setEditingRule(null);
-    setEditForm({ type: '', value: '', enabled: true });
+    setEditForm({ type: '', name:'', value: '', enabled: true });
   };
 
   const handleCancelAdd = () => {
@@ -361,6 +364,16 @@ const ProjectDetails = () => {
             <TableHead>
               <Button
                 variant="ghost"
+                onClick={() => handleSort('name')}
+                className="h-auto p-0 font-medium hover:bg-transparent [padding-inline:unset!important]"
+              >
+                Name
+                {getSortIcon('type')}
+              </Button>
+            </TableHead>
+            <TableHead>
+              <Button
+                variant="ghost"
                 onClick={() => handleSort('type')}
                 className="h-auto p-0 font-medium hover:bg-transparent [padding-inline:unset!important]"
               >
@@ -405,6 +418,7 @@ const ProjectDetails = () => {
                 />
               </TableCell>
               <TableCell>{rule.id}</TableCell>
+              <TableCell>{rule.name}</TableCell>
               <TableCell>{rule.type}</TableCell>
               <TableCell>{rule.value}</TableCell>
               <TableCell>
@@ -473,6 +487,17 @@ const ProjectDetails = () => {
                 value={editingRule?.id || ''}
                 className="col-span-3"
                 disabled
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="rule-name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="rule-name"
+                value={editForm.name}
+                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
