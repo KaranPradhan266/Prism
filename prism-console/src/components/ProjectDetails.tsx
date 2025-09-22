@@ -2,8 +2,8 @@ import React, { useState, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { useSession } from './SessionProvider';
-import { useQuery } from '@tanstack/react-query';
-import { getRulesForProject } from '@/lib/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getRulesForProject, updateRuleForProject } from '@/lib/api';
 import { MoreVertical, Edit, Trash2, Power, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   Table,
@@ -69,7 +69,7 @@ const ProjectDetails = () => {
     queryKey: ['rules', session],
     queryFn: () => getRulesForProject(session!, project.id),
     enabled: !!session,
-  });
+  });  
 
   const handleBulkExport = () => {
     const selectedRulesData = rules?.filter(rule => selectedRules.includes(rule.id));
@@ -182,19 +182,30 @@ const ProjectDetails = () => {
     setIsEditDialogOpen(true);
   };
 
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: ({ ruleId, form }: { ruleId: string; form: typeof editForm }) => {
+      if (!session) {
+        throw new Error("No session found");
+      }
+      return updateRuleForProject(session, project.id, ruleId, form);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rules', session] });
+      setIsEditDialogOpen(false);
+      setEditingRule(null);
+      setEditForm({ type: '', value: '', enabled: true });
+    },
+    onError: (error) => {
+      // You can handle errors here, e.g., show a notification
+      console.error("Failed to update rule:", error);
+    },
+  });
+
   const handleSaveChanges = () => {
     if (!editingRule) return;
-    
-    // Here you would typically make an API call to update the rule
-    console.log('Saving changes for rule:', editingRule.id, editForm);
-    
-    // TODO: Implement API call to update rule
-    // updateRule(editingRule.id, editForm)
-    
-    // Close dialog and reset state
-    setIsEditDialogOpen(false);
-    setEditingRule(null);
-    setEditForm({ type: '', value: '', enabled: true });
+    mutation.mutate({ ruleId: editingRule.id, form: editForm });
   };
 
   const handleCancelEdit = () => {
@@ -430,6 +441,7 @@ const ProjectDetails = () => {
                 value={editForm.type}
                 onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
                 className="col-span-3"
+                disabled
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">

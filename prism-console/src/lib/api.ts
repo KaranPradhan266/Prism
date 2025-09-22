@@ -29,3 +29,23 @@ export const getRulesForProject = async (session: Session, projectId: string) =>
 
   return response.json();
 };
+
+
+export const updateRuleForProject = async (
+  session: Session,
+  projectId: string,
+  ruleId: string,
+  form: Record<string, unknown>
+) => {
+  const response = await fetch(`${API_URL}/projects/${projectId}/rules/${ruleId}`, {
+    method: "PUT", // or PATCH depending on your API
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(form),
+  });
+
+  return response.json(); // or handle response appropriately
+};
+
