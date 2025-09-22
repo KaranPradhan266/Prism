@@ -68,6 +68,7 @@ const ProjectDetails = () => {
     enabled: true
   });
   const [addForm, setAddForm] = useState({
+    name: '',
     type: '',
     value: '',
     enabled: true
@@ -194,6 +195,7 @@ const ProjectDetails = () => {
   const handleAddRule = () => {
     setAddForm({
       type: '',
+      name:'',
       value: '',
       enabled: true
     });
@@ -231,7 +233,7 @@ const ProjectDetails = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rules', session] });
       setIsAddDialogOpen(false);
-      setAddForm({ type: '', value: '', enabled: true });
+      setAddForm({ name: '', type: '', value: '', enabled: true });
     },
     onError: (error) => {
       // You can handle errors here, e.g., show a notification
@@ -256,7 +258,7 @@ const ProjectDetails = () => {
 
   const handleCancelAdd = () => {
     setIsAddDialogOpen(false);
-    setAddForm({ type: '', value: '', enabled: true });
+    setAddForm({ name:'', type: '', value: '', enabled: true });
   };
 
   const handleDelete = (rule: Rule) => {
@@ -557,6 +559,18 @@ const ProjectDetails = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="add-rule-name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="add-rule-name"
+                value={addForm.name}
+                onChange={(e) => setAddForm(prev => ({ ...prev, name: e.target.value }))}
+                className="col-span-3"
+                placeholder="Enter rule name"
+              />
+            </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="add-rule-type" className="text-right">
                 Type
