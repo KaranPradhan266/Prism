@@ -3,7 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { AppLayout } from './AppLayout';
 import { useSession } from './SessionProvider';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getRulesForProject, updateRuleForProject } from '@/lib/api';
+import { getRulesForProject, updateRuleForProject, createRuleForProject } from '@/lib/api';
 import { MoreVertical, Edit, Trash2, Power, ArrowUpDown, ChevronUp, ChevronDown } from 'lucide-react';
 import {
   Table,
@@ -58,8 +58,14 @@ const ProjectDetails = () => {
 
   // Dialog state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [editForm, setEditForm] = useState({
+    type: '',
+    value: '',
+    enabled: true
+  });
+  const [addForm, setAddForm] = useState({
     type: '',
     value: '',
     enabled: true
@@ -182,9 +188,18 @@ const ProjectDetails = () => {
     setIsEditDialogOpen(true);
   };
 
+  const handleAddRule = () => {
+    setAddForm({
+      type: '',
+      value: '',
+      enabled: true
+    });
+    setIsAddDialogOpen(true);
+  };
+
   const queryClient = useQueryClient();
 
-  const mutation = useMutation({
+  const updateMutation = useMutation({
     mutationFn: ({ ruleId, form }: { ruleId: string; form: typeof editForm }) => {
       if (!session) {
         throw new Error("No session found");
@@ -203,15 +218,42 @@ const ProjectDetails = () => {
     },
   });
 
+  const addMutation = useMutation({
+    mutationFn: (form: typeof addForm) => {
+      if (!session) {
+        throw new Error("No session found");
+      }
+      return createRuleForProject(session, project.id, form);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rules', session] });
+      setIsAddDialogOpen(false);
+      setAddForm({ type: '', value: '', enabled: true });
+    },
+    onError: (error) => {
+      // You can handle errors here, e.g., show a notification
+      console.error("Failed to create rule:", error);
+    },
+  });
+
   const handleSaveChanges = () => {
     if (!editingRule) return;
-    mutation.mutate({ ruleId: editingRule.id, form: editForm });
+    updateMutation.mutate({ ruleId: editingRule.id, form: editForm });
+  };
+
+  const handleCreateRule = () => {
+    addMutation.mutate(addForm);
   };
 
   const handleCancelEdit = () => {
     setIsEditDialogOpen(false);
     setEditingRule(null);
     setEditForm({ type: '', value: '', enabled: true });
+  };
+
+  const handleCancelAdd = () => {
+    setIsAddDialogOpen(false);
+    setAddForm({ type: '', value: '', enabled: true });
   };
 
   const handleDelete = (rule: Rule) => {
@@ -273,6 +315,7 @@ const ProjectDetails = () => {
           onChange={(e) => setFilterValue(e.target.value)}
           className="max-w-sm"
         />
+        <Button onClick={handleAddRule}>Add rule</Button>
         {selectedRules.length > 0 && (
           <Button
             variant="outline"
@@ -472,8 +515,66 @@ const ProjectDetails = () => {
             <Button variant="outline" onClick={handleCancelEdit}>
               Cancel
             </Button>
-            <Button onClick={handleSaveChanges}>
-              Save changes
+            <Button onClick={handleSaveChanges} disabled={updateMutation.isPending}>
+              {updateMutation.isPending ? 'Saving...' : 'Save changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Rule Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Add New Rule</DialogTitle>
+            <DialogDescription>
+              Create a new rule. Click create when you're done.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="add-rule-type" className="text-right">
+                Type
+              </Label>
+              <Input
+                id="add-rule-type"
+                value={addForm.type}
+                onChange={(e) => setAddForm(prev => ({ ...prev, type: e.target.value }))}
+                className="col-span-3"
+                placeholder="Enter rule type"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="add-rule-value" className="text-right">
+                Value
+              </Label>
+              <Input
+                id="add-rule-value"
+                value={addForm.value}
+                onChange={(e) => setAddForm(prev => ({ ...prev, value: e.target.value }))}
+                className="col-span-3"
+                placeholder="Enter rule value"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="add-rule-enabled" className="text-right">
+                Enabled
+              </Label>
+              <div className="col-span-3">
+                <Switch
+                  id="add-rule-enabled"
+                  checked={addForm.enabled}
+                  onCheckedChange={(checked) => setAddForm(prev => ({ ...prev, enabled: checked }))}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCancelAdd}>
+              Cancel
+            </Button>
+            <Button onClick={handleCreateRule} disabled={addMutation.isPending || !addForm.type || !addForm.value}>
+              {addMutation.isPending ? 'Creating...' : 'Create rule'}
             </Button>
           </DialogFooter>
         </DialogContent>
