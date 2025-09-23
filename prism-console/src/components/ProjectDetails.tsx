@@ -33,6 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Download } from 'lucide-react';
+import ProjectCard from './projectCard';
 
 interface Rule {
   id: string;
@@ -303,13 +304,7 @@ const ProjectDetails = () => {
   return (
     <AppLayout breadcrumbs={breadcrumbs}>
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-4">{project.name}</h1>
-        <p>{project.description}</p>
-        <p>Path: {project.path_prefix}</p>
-        <p>Status: {project.Status}</p>
-        <p>Created at: {project.created_at}</p>
-        <p>Updated at: {project.updated_at}</p>
-        <p>Upstream URL: {project.upstream_url}</p>
+        <ProjectCard project={project} />
       </div>
 
       {/* Filter Input */}

@@ -1,16 +1,7 @@
 import { getProjects } from '@/lib/api';
 import { useSession } from './SessionProvider';
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { AppLayout } from "./AppLayout";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
-import ProjectCard from './projectCard';
 import ProjectCarousel from './projectCarousel';
 
 interface Project {
@@ -24,8 +15,6 @@ interface Project {
   Status: string;
   // Remove type field conflict and add it properly if needed
 }
-
-
 
 export default function Dashboard() {
   const { session } = useSession();
