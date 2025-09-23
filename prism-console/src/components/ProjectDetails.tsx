@@ -34,6 +34,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Download } from 'lucide-react';
 import ProjectCard from './projectCard';
+import { EditRuleDialog } from './editRuleDialog';
 
 interface Rule {
   id: string;
@@ -64,7 +65,7 @@ const ProjectDetails = () => {
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [editForm, setEditForm] = useState({
     type: '',
-    name:'',
+    name: '',
     value: '',
     enabled: true
   });
@@ -79,12 +80,12 @@ const ProjectDetails = () => {
     queryKey: ['rules', session],
     queryFn: () => getRulesForProject(session!, project.id),
     enabled: !!session,
-  });  
+  });
 
   const handleBulkExport = () => {
     const selectedRulesData = rules?.filter(rule => selectedRules.includes(rule.id));
     console.log('Bulk export rules:', selectedRulesData);
-    
+
     // Create CSV content
     const csvHeaders = ['ID', 'Type', 'Value', 'Status', 'Created At', 'Updated At'];
     const csvRows = selectedRulesData?.map(rule => [
@@ -119,7 +120,7 @@ const ProjectDetails = () => {
   const processedRules = useMemo(() => {
     if (!rules) return [];
 
-    let filtered = rules.filter(rule => 
+    let filtered = rules.filter(rule =>
       rule.type.toLowerCase().includes(filterValue.toLowerCase()) ||
       rule.value.toLowerCase().includes(filterValue.toLowerCase()) ||
       rule.id.toLowerCase().includes(filterValue.toLowerCase())
@@ -129,19 +130,19 @@ const ProjectDetails = () => {
       filtered.sort((a, b) => {
         const aValue = a[sortConfig.key!];
         const bValue = b[sortConfig.key!];
-        
+
         if (typeof aValue === 'string' && typeof bValue === 'string') {
-          return sortConfig.direction === 'asc' 
+          return sortConfig.direction === 'asc'
             ? aValue.localeCompare(bValue)
             : bValue.localeCompare(aValue);
         }
-        
+
         if (typeof aValue === 'boolean' && typeof bValue === 'boolean') {
           return sortConfig.direction === 'asc'
             ? (aValue === bValue ? 0 : aValue ? 1 : -1)
             : (aValue === bValue ? 0 : aValue ? -1 : 1);
         }
-        
+
         return 0;
       });
     }
@@ -159,7 +160,7 @@ const ProjectDetails = () => {
 
   // Handle checkbox selection
   const handleSelectRule = (ruleId: string) => {
-    setSelectedRules(current => 
+    setSelectedRules(current =>
       current.includes(ruleId)
         ? current.filter(id => id !== ruleId)
         : [...current, ruleId]
@@ -167,16 +168,16 @@ const ProjectDetails = () => {
   };
 
   const handleSelectAll = () => {
-    setSelectedRules(current => 
-      current.length === processedRules.length 
-        ? [] 
+    setSelectedRules(current =>
+      current.length === processedRules.length
+        ? []
         : processedRules.map(rule => rule.id)
     );
   };
 
   const getSortIcon = (key: keyof Rule) => {
     if (sortConfig.key !== key) return <ArrowUpDown className="ml-2 h-4 w-4" />;
-    return sortConfig.direction === 'asc' 
+    return sortConfig.direction === 'asc'
       ? <ChevronUp className="ml-2 h-4 w-4" />
       : <ChevronDown className="ml-2 h-4 w-4" />;
   };
@@ -196,7 +197,7 @@ const ProjectDetails = () => {
   const handleAddRule = () => {
     setAddForm({
       type: '',
-      name:'',
+      name: '',
       value: '',
       enabled: true
     });
@@ -254,12 +255,12 @@ const ProjectDetails = () => {
   const handleCancelEdit = () => {
     setIsEditDialogOpen(false);
     setEditingRule(null);
-    setEditForm({ type: '', name:'', value: '', enabled: true });
+    setEditForm({ type: '', name: '', value: '', enabled: true });
   };
 
   const handleCancelAdd = () => {
     setIsAddDialogOpen(false);
-    setAddForm({ name:'', type: '', value: '', enabled: true });
+    setAddForm({ name: '', type: '', value: '', enabled: true });
   };
 
   const handleDelete = (rule: Rule) => {
@@ -337,7 +338,7 @@ const ProjectDetails = () => {
           </p>
         </div>
       )}
-      
+
       <Table>
         <TableHeader>
           <TableRow>
@@ -403,7 +404,7 @@ const ProjectDetails = () => {
         </TableHeader>
         <TableBody>
           {processedRules?.map((rule) => (
-            <TableRow 
+            <TableRow
               key={rule.id}
               className={selectedRules.includes(rule.id) ? 'bg-muted/50' : ''}
             >
@@ -419,11 +420,10 @@ const ProjectDetails = () => {
               <TableCell>{rule.type}</TableCell>
               <TableCell>{rule.value}</TableCell>
               <TableCell>
-                <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                  rule.enabled 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100' 
+                <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${rule.enabled
+                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
                     : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
-                }`}>
+                  }`}>
                   {rule.enabled ? 'Active' : 'Inactive'}
                 </span>
               </TableCell>
@@ -436,21 +436,21 @@ const ProjectDetails = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => handleEdit(rule)}
                       className="cursor-pointer"
                     >
                       <Edit className="mr-2 h-4 w-4" />
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => handleToggleStatus(rule)}
                       className="cursor-pointer"
                     >
                       <Power className="mr-2 h-4 w-4" />
                       {rule.enabled ? 'Disable' : 'Enable'}
                     </DropdownMenuItem>
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => handleDelete(rule)}
                       className="cursor-pointer text-red-600 focus:text-red-600"
                     >
@@ -466,83 +466,12 @@ const ProjectDetails = () => {
       </Table>
 
       {/* Edit Rule Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Rule</DialogTitle>
-            <DialogDescription>
-              Make changes to the rule. Click save when you're done.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="rule-id" className="text-right">
-                ID
-              </Label>
-              <Input
-                id="rule-id"
-                value={editingRule?.id || ''}
-                className="col-span-3"
-                disabled
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="rule-name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="rule-name"
-                value={editForm.name}
-                onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="rule-type" className="text-right">
-                Type
-              </Label>
-              <Input
-                id="rule-type"
-                value={editForm.type}
-                onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
-                className="col-span-3"
-                disabled
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="rule-value" className="text-right">
-                Value
-              </Label>
-              <Input
-                id="rule-value"
-                value={editForm.value}
-                onChange={(e) => setEditForm(prev => ({ ...prev, value: e.target.value }))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="rule-enabled" className="text-right">
-                Enabled
-              </Label>
-              <div className="col-span-3">
-                <Switch
-                  id="rule-enabled"
-                  checked={editForm.enabled}
-                  onCheckedChange={(checked) => setEditForm(prev => ({ ...prev, enabled: checked }))}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCancelEdit}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveChanges} disabled={updateMutation.isPending}>
-              {updateMutation.isPending ? 'Saving...' : 'Save changes'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditRuleDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        rule={editingRule}
+        onCancel={handleCancelEdit}
+      />
 
       {/* Add Rule Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
