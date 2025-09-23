@@ -35,6 +35,7 @@ import { Switch } from "@/components/ui/switch";
 import { Download } from 'lucide-react';
 import ProjectCard from './projectCard';
 import { EditRuleDialog } from './editRuleDialog';
+import { AddRuleDialog } from './addRuleDialog';
 
 interface Rule {
   id: string;
@@ -421,8 +422,8 @@ const ProjectDetails = () => {
               <TableCell>{rule.value}</TableCell>
               <TableCell>
                 <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${rule.enabled
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100'
+                  : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100'
                   }`}>
                   {rule.enabled ? 'Active' : 'Inactive'}
                 </span>
@@ -474,74 +475,12 @@ const ProjectDetails = () => {
       />
 
       {/* Add Rule Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Add New Rule</DialogTitle>
-            <DialogDescription>
-              Create a new rule. Click create when you're done.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="add-rule-name" className="text-right">
-                Name
-              </Label>
-              <Input
-                id="add-rule-name"
-                value={addForm.name}
-                onChange={(e) => setAddForm(prev => ({ ...prev, name: e.target.value }))}
-                className="col-span-3"
-                placeholder="Enter rule name"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="add-rule-type" className="text-right">
-                Type
-              </Label>
-              <Input
-                id="add-rule-type"
-                value={addForm.type}
-                onChange={(e) => setAddForm(prev => ({ ...prev, type: e.target.value }))}
-                className="col-span-3"
-                placeholder="Enter rule type"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="add-rule-value" className="text-right">
-                Value
-              </Label>
-              <Input
-                id="add-rule-value"
-                value={addForm.value}
-                onChange={(e) => setAddForm(prev => ({ ...prev, value: e.target.value }))}
-                className="col-span-3"
-                placeholder="Enter rule value"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="add-rule-enabled" className="text-right">
-                Enabled
-              </Label>
-              <div className="col-span-3">
-                <Switch
-                  id="add-rule-enabled"
-                  checked={addForm.enabled}
-                  onCheckedChange={(checked) => setAddForm(prev => ({ ...prev, enabled: checked }))}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={handleCancelAdd}>
-              Cancel
-            </Button>
-            <Button onClick={handleCreateRule} disabled={addMutation.isPending || !addForm.type || !addForm.value}>
-              {addMutation.isPending ? 'Creating...' : 'Create rule'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddRuleDialog
+        isOpen={isAddDialogOpen}
+        onOpenChange={setIsAddDialogOpen}
+        onCancel={handleCancelAdd}
+      />
+      
     </AppLayout>
   );
 };
