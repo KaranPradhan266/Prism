@@ -1,0 +1,33 @@
+Session Context for Gemini CLI
+
+User: kpradhan
+Project: Prism
+
+Summary:
+The user is debugging a performance issue with a Go application.
+
+Benchmark Command:
+wrk -t2 -c20 -d10s http://localhost:8080/todoist
+
+Benchmark Results:
+- 84.14 Requests/sec
+- 263.58ms average latency (with high standard deviation)
+- 7 non-2xx or 3xx responses
+
+Investigation & Findings:
+- The Go application at localhost:8080 is a reverse proxy.
+- It forwards requests from `/todoist` to an upstream server at `http://localhost:4000`.
+- Server logs show multiple errors: "Error getting project for path prefix '/todoist': failed to get project by path prefix: context canceled".
+- This indicates that the logic for looking up the project by its path prefix is timing out under load. This is the cause of the failed requests and high latency.
+
+Next Step:
+- The next step is to analyze the project lookup logic in the Go application's source code and optimize it.
+
+Blocked Action:
+- The source code is located at `/Users/kpradhan/Go-Projects/Prism/cmd/prism/main.go`.
+- The previous Gemini session was running in the `/Users/kpradhan/Go-Projects/Prism/prism-console` directory and did not have permission to access the `main.go` file.
+
+Action for New Session:
+- The user has been instructed to change their directory to `/Users/kpradhan/Go-Projects/Prism` and start a new session.
+- The new session should now have access to the `main.go` file.
+- The primary goal is to read `/Users/kpradhan/Go-Projects/Prism/cmd/prism/main.go` and analyze the project lookup functionality.

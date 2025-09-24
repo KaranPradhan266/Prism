@@ -20,7 +20,7 @@ func LogAndBroadcast(hub *websockets.Hub, projectID, format string, v ...interfa
 }
 
 // Middleware uses a storage.Repository and a cache to check requests and dynamically proxy them.
-func Middleware(repo *storage.Repository, ruleCache cache.RuleCache, proxyFactory *proxy.Factory, hub *websockets.Hub) func(next http.Handler) http.Handler {
+func Middleware(repo *storage.Repository, projectCache cache.ProjectCache, ruleCache cache.RuleCache, proxyFactory *proxy.Factory, hub *websockets.Hub) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -36,14 +36,20 @@ func Middleware(repo *storage.Repository, ruleCache cache.RuleCache, proxyFactor
 				return
 			}
 
-			LogAndBroadcast(hub, "", "Attempting to find project for path prefix: %s", pathPrefix)
-
-			// 2. Get Project from Database
-			project, err := repo.GetProjectByPathPrefix(ctx, pathPrefix)
-			if err != nil {
-				LogAndBroadcast(hub, "", "Error getting project for path prefix '%s': %v", pathPrefix, err)
-				http.Error(w, fmt.Sprintf("Not Found: Project '%s' not found or error: %v", pathPrefix, err), http.StatusNotFound)
-				return
+			// 2. Get Project from cache or database
+			project, found := projectCache.Get(pathPrefix)
+			if !found {
+				LogAndBroadcast(hub, "", "PROJECT CACHE MISS for path prefix: %s", pathPrefix)
+				var err error
+				project, err = repo.GetProjectByPathPrefix(ctx, pathPrefix)
+				if err != nil {
+					LogAndBroadcast(hub, "", "Error getting project for path prefix '%s': %v", pathPrefix, err)
+					http.Error(w, fmt.Sprintf("Not Found: Project '%s' not found or error: %v", pathPrefix, err), http.StatusNotFound)
+					return
+				}
+				projectCache.Set(pathPrefix, project) // Store in cache for next time
+			} else {
+				LogAndBroadcast(hub, "", "PROJECT CACHE HIT for path prefix: %s", pathPrefix)
 			}
 
 			LogAndBroadcast(hub, project.ID, "Found project '%s' with upstream: %s", project.Name, project.UpstreamURL)

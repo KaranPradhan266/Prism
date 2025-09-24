@@ -50,3 +50,45 @@ func (c *InMemoryCache) Clear(projectID string) {
 	defer c.mu.Unlock()
 	delete(c.cache, projectID)
 }
+
+// ProjectCache defines the interface for a cache that stores projects.
+type ProjectCache interface {
+	Get(pathPrefix string) (*storage.Project, bool)
+	Set(pathPrefix string, project *storage.Project)
+	Clear(pathPrefix string)
+}
+
+// InMemoryProjectCache is a thread-safe, in-memory implementation of the ProjectCache interface.
+type InMemoryProjectCache struct {
+	mu    sync.RWMutex
+	cache map[string]*storage.Project
+}
+
+// NewInMemoryProjectCache creates and returns a new InMemoryProjectCache instance.
+func NewInMemoryProjectCache() *InMemoryProjectCache {
+	return &InMemoryProjectCache{
+		cache: make(map[string]*storage.Project),
+	}
+}
+
+// Get retrieves a project for a given pathPrefix from the cache.
+func (c *InMemoryProjectCache) Get(pathPrefix string) (*storage.Project, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	project, found := c.cache[pathPrefix]
+	return project, found
+}
+
+// Set adds or updates the project for a given pathPrefix in the cache.
+func (c *InMemoryProjectCache) Set(pathPrefix string, project *storage.Project) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.cache[pathPrefix] = project
+}
+
+// Clear removes the project for a given pathPrefix from the cache.
+func (c *InMemoryProjectCache) Clear(pathPrefix string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.cache, pathPrefix)
+}
