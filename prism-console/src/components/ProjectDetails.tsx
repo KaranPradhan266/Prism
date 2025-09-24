@@ -11,6 +11,7 @@ import ProjectCard from './projectCard';
 import { EditRuleDialog } from './editRuleDialog';
 import { AddRuleDialog } from './addRuleDialog';
 import { RulesTable } from './rulesTable'; // Import the new component
+import { useRawLogStream } from '@/hooks/useRawLogStream';
 
 interface Rule {
   id: string;
@@ -26,6 +27,7 @@ const ProjectDetails = () => {
   const location = useLocation();
   const { project } = location.state || {};
   const { session } = useSession();
+  const logs = useRawLogStream(project?.id);
 
   // State for filtering, sorting, and selection
   const [filterValue, setFilterValue] = useState('');
@@ -229,7 +231,10 @@ const ProjectDetails = () => {
       )}
 
       {/* Use the extracted RulesTable component */}
-      <RulesTable
+      <div className="flex">
+      
+        <div className="ring p-4 flex-grow overflow-auto">
+          <RulesTable
         rules={rules || []}
         filterValue={filterValue}
         sortConfig={sortConfig}
@@ -241,6 +246,29 @@ const ProjectDetails = () => {
         onDelete={handleDelete}
         onToggleStatus={handleToggleStatus}
       />
+        </div>
+
+        <div className="ring p-4 flex-grow overflow-auto">
+          <pre>
+            {logs.map((log, index) => (
+              <div key={index}>{log}</div>
+            ))}
+          </pre>
+        </div>
+
+      </div>
+      {/* <RulesTable
+        rules={rules || []}
+        filterValue={filterValue}
+        sortConfig={sortConfig}
+        selectedRules={selectedRules}
+        onSort={handleSort}
+        onSelectRule={handleSelectRule}
+        onSelectAll={handleSelectAll}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onToggleStatus={handleToggleStatus}
+      /> */}
 
       {/* Edit Rule Dialog */}
       <EditRuleDialog

@@ -8,11 +8,19 @@ import (
 	"prism/pkg/cache"
 	"prism/pkg/proxy"
 	"prism/pkg/storage"
+	"prism/pkg/websockets"
 	"strings"
 )
 
+// LogAndBroadcast is a helper to both log a message and broadcast it via WebSocket.
+func LogAndBroadcast(hub *websockets.Hub, projectID, format string, v ...interface{}) {
+	msg := fmt.Sprintf(format, v...)
+	log.Println(msg)
+	hub.BroadcastLog(projectID, msg)
+}
+
 // Middleware uses a storage.Repository and a cache to check requests and dynamically proxy them.
-func Middleware(repo *storage.Repository, ruleCache cache.RuleCache, proxyFactory *proxy.Factory) func(next http.Handler) http.Handler {
+func Middleware(repo *storage.Repository, ruleCache cache.RuleCache, proxyFactory *proxy.Factory, hub *websockets.Hub) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -28,33 +36,33 @@ func Middleware(repo *storage.Repository, ruleCache cache.RuleCache, proxyFactor
 				return
 			}
 
-			log.Printf("Attempting to find project for path prefix: %s\n", pathPrefix)
+			LogAndBroadcast(hub, "", "Attempting to find project for path prefix: %s", pathPrefix)
 
 			// 2. Get Project from Database
 			project, err := repo.GetProjectByPathPrefix(ctx, pathPrefix)
 			if err != nil {
-				log.Printf("Error getting project for path prefix '%s': %v\n", pathPrefix, err)
+				LogAndBroadcast(hub, "", "Error getting project for path prefix '%s': %v", pathPrefix, err)
 				http.Error(w, fmt.Sprintf("Not Found: Project '%s' not found or error: %v", pathPrefix, err), http.StatusNotFound)
 				return
 			}
 
-			log.Printf("Found project '%s' with upstream: %s\n", project.Name, project.UpstreamURL)
+			LogAndBroadcast(hub, project.ID, "Found project '%s' with upstream: %s", project.Name, project.UpstreamURL)
 
 			// 3. Get Rules for the Project (from cache or database)
 			rules, found := ruleCache.Get(project.ID)
 			if !found {
-				log.Printf("CACHE MISS for project %s. Fetching rules from DB.", project.ID)
+				LogAndBroadcast(hub, project.ID, "CACHE MISS for project %s. Fetching rules from DB.", project.ID)
 				//var dbRules []storage.Rule
 				dbRules, err := repo.GetRulesByProjectID(ctx, project.UserID, project.ID)
 				if err != nil {
-					log.Printf("Error getting rules for project '%s': %v\n", project.Name, err)
+					LogAndBroadcast(hub, project.ID, "Error getting rules for project '%s': %v", project.Name, err)
 					http.Error(w, fmt.Sprintf("Internal Server Error: Failed to get rules for project '%s'", project.Name), http.StatusInternalServerError)
 					return
 				}
 				rules = dbRules
 				ruleCache.Set(project.ID, rules) // Store in cache for next time
 			} else {
-				log.Printf("CACHE HIT for project %s.\n", project.ID)
+				LogAndBroadcast(hub, project.ID, "CACHE HIT for project %s.", project.ID)
 			}
 
 			// 4. Apply Firewall Rules
@@ -65,19 +73,19 @@ func Middleware(repo *storage.Repository, ruleCache cache.RuleCache, proxyFactor
 				switch rule.Type {
 				case "ip_block":
 					if clientIP == rule.Value {
-						log.Printf("Blocked request from IP: %s for project '%s'\n", clientIP, project.Name)
+						LogAndBroadcast(hub, project.ID, "Blocked request from IP: %s for project '%s'", clientIP, project.Name)
 						http.Error(w, "Forbidden: blocked by firewall", http.StatusForbidden)
 						return
 					}
 				case "keyword_block":
 					if strings.Contains(r.URL.String(), rule.Value) {
-						log.Printf("Blocked request containing keyword '%s' for project '%s': %s\n", rule.Value, project.Name, r.URL.Path)
+						LogAndBroadcast(hub, project.ID, "Blocked request containing keyword '%s' for project '%s': %s", rule.Value, project.Name, r.URL.Path)
 						http.Error(w, "Forbidden: blocked by firewall", http.StatusForbidden)
 						return
 					}
 				// Add more rule types here (e.g., header_block, body_block)
 				default:
-					log.Printf("Warning: Unknown rule type '%s' for project '%s'\n", rule.Type, project.Name)
+					LogAndBroadcast(hub, project.ID, "Warning: Unknown rule type '%s' for project '%s'", rule.Type, project.Name)
 				}
 			}
 
@@ -90,7 +98,7 @@ func Middleware(repo *storage.Repository, ruleCache cache.RuleCache, proxyFactor
 			if r.URL.Path == "" {
 				r.URL.Path = "/"
 			}
-			log.Printf("Rewriting URL from '%s' to '%s' for upstream '%s'\n", originalPath, r.URL.Path, project.UpstreamURL)
+			LogAndBroadcast(hub, project.ID, "Rewriting URL from '%s' to '%s' for upstream '%s'", originalPath, r.URL.Path, project.UpstreamURL)
 
 			reverseProxy := proxyFactory.NewReverseProxy(project.UpstreamURL)
 			reverseProxy.ServeHTTP(w, r)

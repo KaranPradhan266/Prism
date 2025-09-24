@@ -1,0 +1,54 @@
+Order of Steps for Real-time Log Streaming + Dashboard
+1. Backend: WebSocket Infrastructure
+
+ Add a WebSocket hub (simple broadcast, raw strings).
+
+ Add /ws/logs endpoint (upgrade HTTP → WS).
+
+ Configure CheckOrigin → allow http://localhost:5173.
+
+ Add a helper like BroadcastLog(line string).
+
+2. Backend: Log Hook
+
+ Replace log.Printf(...) calls with a wrapper:
+
+func LogAndBroadcast(hub *RawHub, msg string) {
+    log.Println(msg)      // existing console/file log
+    hub.broadcast <- msg  // push raw string to WS clients
+}
+
+
+ Make sure every relevant proxy action (blocked req, DPI, etc.) uses this.
+
+3. Frontend: Basic Stream
+
+ Implement a useRawLogStream(projectId) hook.
+
+Connects to ws://localhost:8080/ws/logs?projectId=....
+
+Maintains a rolling buffer (cap ~200).
+
+ Render the buffer in a simple <pre> to confirm real-time stream works.
+
+4. Frontend: Log Viewer
+
+ Replace <pre> with a virtualized list (so UI won’t choke with 100+ logs).
+
+ Add search/filter box (optional).
+
+5. Frontend: Metrics Extraction
+
+ Write parser helpers (parseMethod, parseIP, parseUA).
+
+ On every new log, update in-memory counters for:
+
+Methods (GET/POST/PUT/…)
+
+User-agents
+
+IP addresses
+
+Status codes
+
+ Throttle updates with setInterval (e.g. every 500ms) for smoother charts.

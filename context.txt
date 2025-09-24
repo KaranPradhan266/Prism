@@ -28,11 +28,27 @@ This document summarizes the current state, architectural decisions, and immedia
 - **Management API**: A full CRUD API for managing Projects and their associated firewall Rules.
 - **Performance Optimization**: An in-memory cache for firewall rules is implemented to minimize database lookups on high-traffic routes. The cache is automatically invalidated when rules are changed via the API.
 
-## 3. Immediate Next Step
+## 3. Logging Architecture (Implemented)
 
-The core backend API is feature-complete. The next phase can be chosen from the following major goals outlined in the project roadmap:
+A real-time, project-specific logging system has been implemented to stream proxy logs to the frontend via WebSockets. This enables live traffic analysis and threat detection from the project dashboard.
 
-- **1. Begin React Dashboard (Phase 5):** Build the frontend UI to consume the completed management API.
+### 3.1 Backend (Go)
+
+*   **WebSocket Hub (`pkg/websockets/hub.go`):** A concurrent WebSocket hub manages client connections in project-specific "rooms". It ensures that log messages are only broadcast to clients subscribed to the corresponding project.
+*   **WebSocket Endpoint (`/ws/logs/{projectId}`):** The `main.go` file registers the `/ws/logs/` endpoint, which upgrades HTTP connections to WebSockets. The project ID is extracted from the URL to identify the log stream.
+*   **Firewall Integration (`pkg/firewall/firewall.go`):** The `firewall.Middleware` uses the `LogAndBroadcast` helper function to send log messages to the WebSocket hub. The project ID is passed to this function to ensure logs are sent to the correct room.
+*   **Usage:** To broadcast a log message for a specific project, use the `LogAndBroadcast(hub, projectID, format, v...)` function.
+
+### 3.2 Frontend (React)
+
+*   **`useRawLogStream` Hook (`prism-console/src/hooks/useRawLogStream.ts`):** This custom hook establishes and manages the WebSocket connection to the `/ws/logs/{projectId}` endpoint. It uses a `useRef` to ensure a single, stable connection per project and handles connection lifecycle events (open, message, close, error).
+*   **`ProjectDetails.tsx` Component:** This component consumes the `useRawLogStream` hook to receive the log stream and displays the logs in a real-time viewer. The project ID from the component's state is passed to the hook to initiate the connection.
+
+## 4. Immediate Next Step
+
+The core backend API and the real-time logging feature are now feature-complete. The next phase can be chosen from the following major goals:
+
+- **1. Begin React Dashboard (Phase 5):** Continue building the frontend UI to consume the completed management API and enhance the user experience.
 - **2. Containerize the Application (Phase 6):** Create a `Dockerfile` and `docker-compose.yml` to make the project portable and easy to deploy.
 - **3. Expand Firewall Features (Phase 4):** Implement more advanced DPI, such as inspecting response bodies for sensitive data.
 
