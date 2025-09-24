@@ -2,9 +2,11 @@ package proxy
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 )
 
 // Factory is a factory for creating reverse proxies.
@@ -23,6 +25,22 @@ func (f *Factory) NewReverseProxy(target string) *httputil.ReverseProxy {
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(url)
+
+	// Create a custom transport with increased connection pooling
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		ForceAttemptHTTP2:     true,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConnsPerHost:   100, // Increase this value
+	}
+	proxy.Transport = transport
 
 	originalDirector := proxy.Director
 	proxy.Director = func(req *http.Request) {
