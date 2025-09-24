@@ -12,6 +12,9 @@ import { EditRuleDialog } from './editRuleDialog';
 import { AddRuleDialog } from './addRuleDialog';
 import { RulesTable } from './rulesTable'; // Import the new component
 import { useRawLogStream } from '@/hooks/useRawLogStream';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { materialDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { codepenEmbed } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 interface Rule {
   id: string;
@@ -229,47 +232,118 @@ const ProjectDetails = () => {
           </p>
         </div>
       )}
+      <div className="flex gap-4 h-full">
+        {/* Rules panel */}
+        <div className="flex-1 flex flex-col rounded border">
+          {/* Header */}
+          <div className="flex items-center justify-between p-2 border-b">
+            <h2 className="text-lg font-semibold">Rules</h2>
+            <span className="text-sm opacity-70">
+              {selectedRules.length > 0 && `${selectedRules.length} selected`}
+            </span>
+          </div>
+
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-auto max-h-[400px]">
+            <RulesTable
+              rules={rules || []}
+              filterValue={filterValue}
+              sortConfig={sortConfig}
+              selectedRules={selectedRules}
+              onSort={handleSort}
+              onSelectRule={handleSelectRule}
+              onSelectAll={handleSelectAll}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onToggleStatus={handleToggleStatus}
+            />
+          </div>
+        </div>
+
+        {/* Logs panel */}
+        <div className="flex-1 flex flex-col rounded border">
+          {/* Header */}
+          <div className="flex items-center justify-between p-2 border-b">
+            <h2 className="text-lg font-semibold">Logs</h2>
+            <span className="text-sm opacity-70">
+              {logs.length} {logs.length === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+
+          {/* Scrollable content */}
+          <div className="flex-1 overflow-auto max-h-[350px]">
+            <SyntaxHighlighter
+              language="html"
+              style={codepenEmbed}
+              showLineNumbers={true}
+              customStyle={{
+                margin: 0,
+                padding: '1rem',
+                fontSize: '0.875rem',
+                width: '100%',
+                maxWidth: '100%',
+              }}
+            >
+              {[...logs].reverse().join("\n")}
+            </SyntaxHighlighter>
+          </div>
+        </div>
+      </div>
+
+
 
       {/* Use the extracted RulesTable component */}
-      <div className="flex">
-      
-        <div className="ring p-4 flex-grow overflow-auto">
-          <RulesTable
-        rules={rules || []}
-        filterValue={filterValue}
-        sortConfig={sortConfig}
-        selectedRules={selectedRules}
-        onSort={handleSort}
-        onSelectRule={handleSelectRule}
-        onSelectAll={handleSelectAll}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onToggleStatus={handleToggleStatus}
-      />
+      {/* <div className="flex gap-4 h-full overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Rules</h2>
+            <span className="text-sm opacity-70">
+              {selectedRules.length > 0 && `${selectedRules.length} selected`}
+            </span>
+          </div>
+          <div className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm min-h-0 overflow-y-auto">
+            <div className="p-4 overflow-y-auto">
+              <RulesTable
+                rules={rules || []}
+                filterValue={filterValue}
+                sortConfig={sortConfig}
+                selectedRules={selectedRules}
+                onSort={handleSort}
+                onSelectRule={handleSelectRule}
+                onSelectAll={handleSelectAll}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleStatus={handleToggleStatus}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="ring p-4 flex-grow overflow-auto">
-          <pre>
-            {logs.map((log, index) => (
-              <div key={index}>{log}</div>
-            ))}
-          </pre>
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold">Logs</h2>
+            <span className="text-sm opacity-70">
+              {logs.length} {logs.length === 1 ? 'entry' : 'entries'}
+            </span>
+          </div>
+          <div className="flex-1 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm min-h-0 overflow-y-auto">
+            <SyntaxHighlighter
+              language="html"
+              style={codepenEmbed}
+              showLineNumbers={true}
+              customStyle={{
+                margin: 0,
+                padding: '1rem',
+                fontSize: '0.875rem',
+                width: '100%',
+                maxWidth: '100%'
+              }}
+            >
+              {[...logs].reverse().join("\n")}
+            </SyntaxHighlighter>
+          </div>
         </div>
-
-      </div>
-      {/* <RulesTable
-        rules={rules || []}
-        filterValue={filterValue}
-        sortConfig={sortConfig}
-        selectedRules={selectedRules}
-        onSort={handleSort}
-        onSelectRule={handleSelectRule}
-        onSelectAll={handleSelectAll}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onToggleStatus={handleToggleStatus}
-      /> */}
-
+      </div> */}
       {/* Edit Rule Dialog */}
       <EditRuleDialog
         isOpen={isEditDialogOpen}
@@ -284,7 +358,6 @@ const ProjectDetails = () => {
         onOpenChange={setIsAddDialogOpen}
         onCancel={handleCancelAdd}
       />
-
     </AppLayout>
   );
 };
