@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card"
 import { Button } from "./ui/button"
 import { Badge } from "./ui/badge"
 import { Clock, ExternalLink, Folder, GitBranch } from "lucide-react"
+import { useLocation } from "react-router-dom";
+import { EditProjectDialog } from './editProjectDialog';
 
 // You'll need to import or define the Project type
 interface Project {
@@ -16,19 +19,33 @@ interface Project {
   // Remove type field conflict and add it properly if needed
 }
 
-const ProjectCard = ({ project }: { project: Project }) => {
+const ProjectCard = ({ project: initialProject }: { project: Project }) => {
+  const location = useLocation();
+  const isDetailsPage = location.pathname.includes('/project');
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [project, setProject] = useState(initialProject);
+
+  useEffect(() => {
+    setProject(initialProject);
+  }, [initialProject]);
+
+  const handleProjectUpdate = (updatedData: Partial<Project>) => {
+    setProject(prevProject => ({ ...prevProject, ...updatedData }));
+  };
+
   const formatDate = (dateString: string) => {
     // Handle your timestamp format: 2025-09-21 01:26:12.759234+00
     const date = new Date(dateString);
-    
+  
+
     // Check if date is valid
     if (isNaN(date.getTime())) {
       return 'Invalid date';
     }
-    
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
@@ -53,7 +70,7 @@ const ProjectCard = ({ project }: { project: Project }) => {
   const getProjectType = (project: Project): string => {
     const pathLower = project.path_prefix.toLowerCase();
     const nameLower = project.name.toLowerCase();
-    
+
     if (pathLower.includes('api') || nameLower.includes('api')) {
       return 'Backend';
     }
@@ -82,13 +99,13 @@ const ProjectCard = ({ project }: { project: Project }) => {
   };
 
   const projectType = getProjectType(project);
-  
+
   // Generate a description if none exists
   const getProjectDescription = (project: Project): string => {
     if (project.description) {
       return project.description;
     }
-    
+
     // Generate description based on project type and name
     const type = getProjectType(project);
     switch (type) {
@@ -104,83 +121,94 @@ const ProjectCard = ({ project }: { project: Project }) => {
   };
 
   return (
-    <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-card border-border">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <CardTitle className="flex items-center gap-2 text-foreground group-hover:text-primary transition-colors">
-            <span className="text-lg">{getTypeIcon(projectType)}</span>
-            <span className="line-clamp-1">{project.name}</span>
-          </CardTitle>
-          <Badge 
-            variant="outline" 
-            className={`shrink-0 capitalize ${getStatusColor(project.Status)}`}
-          >
-            {project.Status}
-          </Badge>
-        </div>
-        <CardDescription className="text-muted-foreground leading-relaxed">
-          {getProjectDescription(project)}
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-4">
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-              <Folder className="h-4 w-4 shrink-0" />
-              <span className="text-sm font-medium">Path Prefix:</span>
-            </div>
-            <code className="bg-muted px-2 py-1 rounded-md text-xs font-mono text-foreground border">
-              {project.path_prefix}
-            </code>
+    <>
+      <Card className="group hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-card border-border">
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <CardTitle className="flex items-center gap-2 text-foreground group-hover:text-primary transition-colors">
+              <span className="text-lg">{getTypeIcon(projectType)}</span>
+              <span className="line-clamp-1">{project.name}</span>
+            </CardTitle>
+            <Badge
+              variant="outline"
+              className={`shrink-0 capitalize ${getStatusColor(project.Status)}`}
+            >
+              {project.Status}
+            </Badge>
           </div>
+          <CardDescription className="text-muted-foreground leading-relaxed">
+            {getProjectDescription(project)}
+          </CardDescription>
+        </CardHeader>
 
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-              <Clock className="h-4 w-4 shrink-0" />
-              <span className="text-sm font-medium">Created:</span>
-            </div>
-            <span className="text-sm text-foreground">
-              {formatDate(project.created_at)}
-            </span>
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-              <Clock className="h-4 w-4 shrink-0" />
-              <span className="text-sm font-medium">Updated:</span>
-            </div>
-            <span className="text-sm text-foreground">
-              {formatDate(project.updated_at)}
-            </span>
-          </div>
-
-          {/* Add upstream URL if available */}
-          {project.upstream_url && (
+        <CardContent className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 text-muted-foreground min-w-0">
-                <ExternalLink className="h-4 w-4 shrink-0" />
-                <span className="text-sm font-medium">Upstream:</span>
+                <Folder className="h-4 w-4 shrink-0" />
+                <span className="text-sm font-medium">Path Prefix:</span>
               </div>
-              <code className="bg-muted px-2 py-1 rounded-md text-xs font-mono text-foreground border truncate">
-                {project.upstream_url}
+              <code className="bg-muted px-2 py-1 rounded-md text-xs font-mono text-foreground border">
+                {project.path_prefix}
               </code>
             </div>
-          )}
-        </div>
-      </CardContent>
 
-      <CardFooter className="pt-4 bg-muted/30 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <GitBranch className="h-4 w-4" />
-          <span className="text-sm">Type: {projectType}</span>
-        </div>
-        <Button size="sm">
-          <ExternalLink className="h-4 w-4 mr-2" />
-          View Details
-        </Button>
-      </CardFooter>
-    </Card>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                <Clock className="h-4 w-4 shrink-0" />
+                <span className="text-sm font-medium">Created:</span>
+              </div>
+              <span className="text-sm text-foreground">
+                {formatDate(project.created_at)}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                <Clock className="h-4 w-4 shrink-0" />
+                <span className="text-sm font-medium">Updated:</span>
+              </div>
+              <span className="text-sm text-foreground">
+                {formatDate(project.updated_at)}
+              </span>
+            </div>
+
+            {/* Add upstream URL if available */}
+            {project.upstream_url && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-muted-foreground min-w-0">
+                  <ExternalLink className="h-4 w-4 shrink-0" />
+                  <span className="text-sm font-medium">Upstream:</span>
+                </div>
+                <code className="bg-muted px-2 py-1 rounded-md text-xs font-mono text-foreground border truncate">
+                  {project.upstream_url}
+                </code>
+              </div>
+            )}
+          </div>
+        </CardContent>
+
+        <CardFooter className="pt-4 bg-muted/30 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <GitBranch className="h-4 w-4" />
+            <span className="text-sm">Type: {projectType}</span>
+          </div>
+          {isDetailsPage && (
+            <Button size="sm" onClick={() => setIsEditDialogOpen(true)}>
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Edit Project
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+      <EditProjectDialog
+        isOpen={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onCancel={() => setIsEditDialogOpen(false)}
+        onUpdate={handleProjectUpdate}
+        project={project}
+      />
+    </>
   );
 };
 
